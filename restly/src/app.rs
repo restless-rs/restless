@@ -7,14 +7,14 @@ use tokio::net::{TcpListener, TcpStream};
 use crate::route::Route;
 
 pub struct App<'a> {
-    handlers: Vec<Route<'a>>,
+    routes: Vec<Route<'a>>,
 }
 
 const BASE_ADDR: &str = "127.0.0.1";
 
 impl<'a> App<'a> {
     pub fn new() -> App<'a> {
-        App { handlers: vec![] }
+        App { routes: vec![] }
     }
 
     #[tokio::main]
