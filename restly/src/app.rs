@@ -1,16 +1,54 @@
 use crate::router::RouterTrait;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::net::{TcpListener, TcpStream};
 
-pub struct App;
+pub struct App {
+    listener: Option<Arc<TcpListener>>,
+}
+
+const BASE_ADDR: &str = "127.0.0.1";
 
 impl App {
     pub fn new() -> App {
-        App {}
+        App { listener: None }
     }
 
-    pub fn listen<F>(port: &str, on_mounted: F)
+    #[tokio::main]
+    pub async fn listen<F>(&mut self, port: &str, on_binded: F)
     where
         F: FnOnce(),
     {
+        // TODO: Create `build_addr` function
+        let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
+
+        self.listener = Some(Arc::new(
+            TcpListener::bind(addr.clone())
+                .await
+                .expect(format!("Can't bound at {}", addr).as_str()),
+        ));
+
+        on_binded();
+
+        loop {
+            // TODO: Remove `listener` cloning
+            let listener = self.listener.as_ref().unwrap();
+            let listener = Arc::clone(&listener);
+            tokio::spawn(async move {
+                match listener.accept().await {
+                    Ok((stream, addr)) => App::handle_stream(stream, addr).await,
+                    Err(err) => {
+                        println!("Couldn't get client: {:?}", err);
+                    }
+                }
+            })
+            .await
+            .unwrap();
+        }
+    }
+
+    async fn handle_stream(_stream: TcpStream, addr: SocketAddr) {
+        println!("Handled stream at {}", addr);
+        // TODO: Parse stream
     }
 }
 
@@ -50,4 +88,3 @@ impl RouterTrait for App {
         todo!()
     }
 }
-
