@@ -4,7 +4,7 @@ use tokio::net::{TcpListener, TcpStream};
 
 use crate::requrest::Req;
 use crate::route::Route;
-use crate::router::RouterTrait;
+use crate::router::RouteHandler;
 
 pub struct App<'a> {
     routes: Vec<Route<'a>>,
@@ -65,7 +65,7 @@ impl<'a> App<'a> {
     }
 }
 
-impl RouterTrait for App<'_> {
+impl RouteHandler for App<'_> {
     fn get<F>(path: &str, handler: F)
     where
         F: Fn(),
