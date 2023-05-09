@@ -67,38 +67,48 @@ impl<'a> App<'a> {
 }
 
 impl RouteHandler for App<'_> {
-    fn get<F>(&mut self, path: &str, handler: F)
+    fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn post<F>(&mut self, path: &str, handler: F)
+    fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn put<F>(&mut self, path: &str, handler: F)
+    fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn delete<F>(&mut self, path: &str, handler: F)
+    fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn patch<F>(&mut self, path: &str, handler: F)
+    fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 }
