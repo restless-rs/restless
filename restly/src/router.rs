@@ -1,7 +1,17 @@
 pub trait RouteHandler {
-    fn get<F>(path: &str, handler: F) where F: Fn();
-    fn post<F>(path: &str, handler: F) where F: Fn();
-    fn put<F>(path: &str, handler: F) where F: Fn();
-    fn delete<F>(path: &str, handler: F) where F: Fn();
-    fn patch<F>(path: &str, handler: F) where F: Fn();
+    fn get<F>(&mut self, path: &str, handler: F)
+    where
+        F: Fn();
+    fn post<F>(&mut self, path: &str, handler: F)
+    where
+        F: Fn();
+    fn put<F>(&mut self, path: &str, handler: F)
+    where
+        F: Fn();
+    fn delete<F>(&mut self, path: &str, handler: F)
+    where
+        F: Fn();
+    fn patch<F>(&mut self, path: &str, handler: F)
+    where
+        F: Fn();
 }
