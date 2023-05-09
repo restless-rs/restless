@@ -2,15 +2,18 @@ use crate::router::RouterTrait;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::{TcpListener, TcpStream};
 
-pub struct App {
+use crate::route::Route;
+
+pub struct App <'a> {
     listener: Option<Arc<TcpListener>>,
+    handlers: Vec<Route<'a>>,
 }
 
 const BASE_ADDR: &str = "127.0.0.1";
 
-impl App {
-    pub fn new() -> App {
-        App { listener: None }
+impl <'a> App <'a> {
+    pub fn new() -> App <'a>{
+        App { listener: None, handlers: vec![] }
     }
 
     #[tokio::main]
@@ -52,7 +55,7 @@ impl App {
     }
 }
 
-impl RouterTrait for App {
+impl RouterTrait for App <'_> {
     fn get<F>(path: &str, handler: F)
     where
         F: Fn(),
