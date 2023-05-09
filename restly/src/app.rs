@@ -1,10 +1,10 @@
-use crate::requrest::Req;
-use crate::router::RouterTrait;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
+use crate::requrest::Req;
 use crate::route::Route;
+use crate::router::RouterTrait;
 
 pub struct App<'a> {
     routes: Vec<Route<'a>>,
