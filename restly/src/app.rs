@@ -1,6 +1,9 @@
 use crate::router::RouterTrait;
 use std::net::SocketAddr;
+use std::os::unix::raw::off_t;
+use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
+use crate::requrest::Req;
 
 use crate::route::Route;
 
@@ -48,7 +51,16 @@ impl<'a> App<'a> {
         }
     }
 
-    async fn handle_stream(_stream: TcpStream, addr: SocketAddr) {
+    async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
+        let (reader, mut writer) = stream.split();
+
+        let mut buf_reader = BufReader::new(reader);
+        let mut raw_req = String::new();
+
+        buf_reader.read_to_string(&mut raw_req).await.unwrap();
+
+        let req = Req::new(raw_req);
+
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
     }
