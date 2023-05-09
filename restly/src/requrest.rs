@@ -7,18 +7,21 @@ enum ReqMethod {
 }
 
 impl ReqMethod {
-    pub fn from_string(method_str: &str) -> ReqMethod {
-        let method_uppercased = method_str.to_uppercase();
-        if method_uppercased == "GET" {
-            ReqMethod::GET
-        } else if method_uppercased == "POST" {
-            ReqMethod::POST
-        } else if method_uppercased == "PATCH" {
-            ReqMethod::PATCH
-        } else if method_uppercased == "DELETE" {
-            ReqMethod::DELETE
-        } else if method_uppercased == "PUT" {
-            ReqMethod::PUT
+    pub fn from_string(raw_method: &str) -> Option<ReqMethod> {
+        let raw_method = raw_method.to_uppercase();
+
+        if raw_method == "GET" {
+            Some(ReqMethod::GET)
+        } else if raw_method == "POST" {
+            Some(ReqMethod::POST)
+        } else if raw_method == "PATCH" {
+            Some(ReqMethod::PATCH)
+        } else if raw_method == "DELETE" {
+            Some(ReqMethod::DELETE)
+        } else if raw_method == "PUT" {
+            Some(ReqMethod::PUT)
+        } else {
+            None
         }
     }
 }
@@ -32,7 +35,7 @@ pub struct Req<'a> {
 impl Req<'_> {
     pub fn new(raw_req: String) {
         let mut lines = raw_req.lines();
-        let req = Req{
+        let req = Req {
             body: None,
             path: "",
             method: ReqMethod::GET,
@@ -41,7 +44,6 @@ impl Req<'_> {
         let main_info = lines.next();
     }
 
-    fn parse_main(line: &str) {
-
-    }
+    fn parse_main(line: &str) {}
 }
+
