@@ -1,6 +1,6 @@
 # Restly
 
-Express inspired restapi framework on rust
+`express` inspired rest api framework written in `Rust`
 
 ## Examples
 
