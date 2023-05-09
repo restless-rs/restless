@@ -17,6 +17,7 @@ impl<'a> App<'a> {
         App { routes: vec![] }
     }
 
+    // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&mut self, port: u16, on_binded: F)
     where
