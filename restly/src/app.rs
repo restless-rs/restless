@@ -19,7 +19,7 @@ impl<'a> App<'a> {
     }
 
     #[tokio::main]
-    pub async fn listen<F>(&mut self, port: &str, on_binded: F)
+    pub async fn listen<F>(&mut self, port: u16, on_binded: F)
     where
         F: FnOnce(),
     {

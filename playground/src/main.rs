@@ -1,10 +1,9 @@
 use restly::app::App;
 
-
 fn main() {
+    let port = 3000;
     let mut app = App::new();
-    app.listen("3000", || {
-        println!("Bind at 3000 port")
+    app.listen(port, || {
+        println!("Bind at {port} port")
     });
 }
-
