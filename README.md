@@ -1,4 +1,4 @@
-# Restly
+# Resless
 
 Express-inspired rust web framework
 
@@ -7,7 +7,7 @@ Express-inspired rust web framework
 Simple http listening:
 
 ```rust
-use restly::app::App;
+use restless::app::App;
 
 fn main() {
     let port = 3000;
