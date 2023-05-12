@@ -37,7 +37,7 @@ impl<'a> App<'a> {
             // connection in main loop with `.await`
             let result = listener.accept().await;
             //                            ^^^^^^
-            tokio::spawn(async move {
+            tokio::spawn(async {
                 match result {
                     Ok((stream, addr)) => App::handle_stream(stream, addr).await,
                     Err(err) => {
