@@ -17,6 +17,7 @@ impl<'a> App<'a> {
         App { routes: vec![] }
     }
 
+    // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&mut self, port: u16, on_binded: F)
     where
@@ -64,38 +65,48 @@ impl<'a> App<'a> {
 }
 
 impl RouteHandler for App<'_> {
-    fn get<F>(path: &str, handler: F)
+    fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn post<F>(path: &str, handler: F)
+    fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn put<F>(path: &str, handler: F)
+    fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn delete<F>(path: &str, handler: F)
+    fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 
-    fn patch<F>(path: &str, handler: F)
+    fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
-        todo!()
+        todo!();
+
+        self
     }
 }
