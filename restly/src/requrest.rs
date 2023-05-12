@@ -8,13 +8,15 @@ pub struct Req<'a> {
 }
 
 impl<'a> Req<'a> {
-    pub fn new(raw_req: String) -> Result<Req<'a>, io::Error> {
+    pub fn new(raw_req: String) -> Req<'a> {
         let mut lines = raw_req.lines();
         let req = Req::default();
 
+        println!("{}", raw_req);
+
         let main_info = lines.next();
 
-        Ok(req)
+        req
     }
 
     fn parse_main(line: &str) {}
