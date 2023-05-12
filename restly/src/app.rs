@@ -44,9 +44,7 @@ impl<'a> App<'a> {
                         println!("Couldn't get client: {:?}", err);
                     }
                 }
-            })
-            .await
-            .unwrap();
+            });
         }
     }
 
