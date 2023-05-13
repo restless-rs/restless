@@ -12,10 +12,7 @@ struct PathItem<'a> {
 
 impl PathItem<'_> {
     pub fn new(value: &str, r#type: PathItemType) -> PathItem {
-        PathItem {
-            value,
-            r#type,
-        }
+        PathItem { value, r#type }
     }
 }
 
@@ -28,7 +25,7 @@ impl Route<'_> {
     pub fn new(path: &str, handler: fn()) -> Route {
         Route {
             paths: Route::parse_path(path),
-            handler
+            handler,
         }
     }
 
