@@ -47,7 +47,7 @@ impl FromStr for ReqMethod {
             "PATCH" => Ok(ReqMethod::PATCH),
             "PUT" => Ok(ReqMethod::PUT),
             "DELETE" => Ok(ReqMethod::DELETE),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -66,28 +66,25 @@ impl<'a> Req<'a> {
         req.protocol = protocol;
 
         // Pulling headers
-        lines
-            .clone()
-            .take_while(|l| !l.is_empty())
-            .for_each(|l| {
-                let mut split = l.split(": ");
-                let header_name = split.next().unwrap();
-                let header_value = split.next().unwrap();
+        lines.clone().take_while(|l| !l.is_empty()).for_each(|l| {
+            let mut split = l.split(": ");
+            let header_name = split.next().unwrap();
+            let header_value = split.next().unwrap();
 
-                req.headers.insert(
-                    header_name,
-                    header_value,
-                );
-            });
+            req.headers.insert(header_name, header_value);
+        });
 
         req.derive_hostname();
         req.derive_queries();
 
         // Pulling body
-        let body = lines.clone().skip_while(|l| !l.is_empty()).fold(String::new(), |mut acc, l| {
-            acc += l;
-            acc
-        });
+        let body = lines
+            .clone()
+            .skip_while(|l| !l.is_empty())
+            .fold(String::new(), |mut acc, l| {
+                acc += l;
+                acc
+            });
 
         if !body.is_empty() {
             req.body = Some(body);
@@ -122,14 +119,13 @@ impl<'a> Req<'a> {
 
     fn derive_queries(&mut self) {
         if !self.path.contains("?") {
-            return ()
+            return ();
         };
 
         let splitted_path = self.path.split("?").collect::<Vec<_>>();
         let query_string = splitted_path.get(1).unwrap();
 
         self.queries = Req::parse_query_string(query_string);
-
 
         let pure_path = splitted_path.get(0).unwrap();
         self.path = pure_path;
@@ -144,13 +140,9 @@ impl<'a> Req<'a> {
             let name = splitted.next().unwrap();
             let value = splitted.next().unwrap();
 
-            res.insert(
-                name,
-                value
-            );
+            res.insert(name, value);
         });
 
         res
     }
 }
-
