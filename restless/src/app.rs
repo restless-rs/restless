@@ -5,6 +5,7 @@ use tokio::net::{TcpListener, TcpStream};
 
 use crate::requrest::Req;
 use crate::route::Route;
+use crate::route::PathItemType;
 use crate::router::RouteHandler;
 
 pub struct App<'a> {
@@ -59,10 +60,49 @@ impl<'a> App<'a> {
         buf_reader.read_to_string(&mut raw_req).await.unwrap();
 
         let req = Req::new(&raw_req);
-
+        
+        // TODO: Rewrite to call self.App
+        let mut temp_app = App::new();
+        temp_app.routes.push(Route::new("/home", || {println!("home")}));
+        temp_app.routes.push(Route::new("/login", || {println!("first login")}));
+        temp_app.routes.push(Route::new("/login", || {println!("second logout")}));
+        temp_app.routes.push(Route::new("/item/:itemid/getitem", || {println!("second logout")}));
+        println!("{:?}", temp_app.build_request_path(&req));
+        
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
     }
+
+    fn build_request_path(&self, req: &'a Req) -> Vec<&Route<'a>> {
+        let mut request_map = Vec::new();
+        let req_paths: Vec<&str> = req.path.split_terminator("/").collect();
+       
+        for route in &self.routes {
+            let mut is_compatible = true;
+
+            if route.paths.len() != req_paths.len(){
+                continue;
+            }
+            
+            for i in 0..route.paths.len(){
+                match route.paths[i].r#type {
+                    PathItemType::Static => {
+                        if route.paths[i].value != req_paths[i] {
+                            is_compatible = false;
+                            break;
+                        }
+                    }
+                    PathItemType::Dynamic => (),
+                }
+            }
+
+            if is_compatible{
+                request_map.push(route);
+            }
+        }
+        request_map
+    }
+
 }
 
 impl RouteHandler for App<'_> {
