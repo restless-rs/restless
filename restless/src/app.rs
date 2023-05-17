@@ -20,7 +20,7 @@ impl<'a> App<'a> {
 
     // TODO: Client error handle hook on connection
     #[tokio::main]
-    pub async fn listen<F>(&mut self, port: u16, on_binded: F)
+    pub async fn listen<F>(&'a self, port: u16, on_binded: F)
     where
         F: FnOnce(),
     {
@@ -33,24 +33,22 @@ impl<'a> App<'a> {
 
         on_binded();
 
-        loop {
-            // TODO: Benchmark stream handling
-            // NOTE: This can cause high latency because we awaiting result of
-            // connection in main loop with `.await`
+        loop /* of pain and suffer */ {
+
             let result = listener.accept().await;
-            //                            ^^^^^^
-            tokio::spawn(async {
+
+            tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => App::handle_stream(stream, addr).await,
-                    Err(err) => {
-                        println!("Couldn't get client: {:?}", err);
-                    }
+                    Ok((stream, addr)) => self.handle_stream(stream, addr).await,
+                    Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
         }
     }
 
-    async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
+    #[allow(unused_variables)]
+    #[allow(unused_mut)]
+    async fn handle_stream(&self, mut stream: TcpStream, addr: SocketAddr) {
         let (reader, mut writer) = stream.split();
 
         let mut buf_reader = BufReader::new(reader);
@@ -65,6 +63,8 @@ impl<'a> App<'a> {
     }
 }
 
+#[allow(unused_variables)]
+#[allow(unreachable_code)]
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
