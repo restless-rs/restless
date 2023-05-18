@@ -75,7 +75,7 @@ impl<'a> App<'a> {
 
     fn build_request_path(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
-        let req_paths: Vec<&str> = req.path.split_terminator("/").collect();
+        let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
 
         for route in &self.routes {
             let mut is_compatible = true;
