@@ -53,7 +53,7 @@ impl FromStr for ReqMethod {
 }
 
 impl<'a> Req<'a> {
-    pub fn new(raw_req: &'a String) -> Req<'a> {
+    pub fn new(raw_req: &'a str) -> Req<'a> {
         let mut lines = raw_req.lines();
         let mut req = Req::default();
 

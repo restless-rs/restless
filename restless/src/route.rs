@@ -1,13 +1,15 @@
 use std::path::Path;
 
-enum PathItemType {
+#[derive(Debug)]
+pub enum PathItemType {
     Static,
     Dynamic,
 }
 
-struct PathItem<'a> {
-    r#type: PathItemType,
-    value: &'a str,
+#[derive(Debug)]
+pub struct PathItem<'a> {
+    pub r#type: PathItemType,
+    pub value: &'a str,
 }
 
 impl PathItem<'_> {
@@ -16,9 +18,10 @@ impl PathItem<'_> {
     }
 }
 
+#[derive(Debug)]
 pub struct Route<'a> {
-    paths: Vec<PathItem<'a>>,
-    handler: fn(),
+    pub paths: Vec<PathItem<'a>>,
+    pub handler: fn(),
 }
 
 impl Route<'_> {
