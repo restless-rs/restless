@@ -4,8 +4,8 @@ use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 use crate::requrest::Req;
-use crate::route::Route;
 use crate::route::PathItemType;
+use crate::route::Route;
 use crate::router::RouteHandler;
 
 pub struct App<'a> {
@@ -22,8 +22,8 @@ impl<'a> App<'a> {
     // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&mut self, port: u16, on_binded: F)
-        where
-            F: FnOnce(),
+    where
+        F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -64,10 +64,20 @@ impl<'a> App<'a> {
 
         // TODO: Rewrite to call self.App
         let mut temp_app = App::new();
-        temp_app.routes.push(Route::new("/home", || { println!("home") }));
-        temp_app.routes.push(Route::new("/login", || { println!("first login") }));
-        temp_app.routes.push(Route::new("/login", || { println!("second logout") }));
-        temp_app.routes.push(Route::new("/item/:itemid/getitem", || { println!("second logout") }));
+        temp_app
+            .routes
+            .push(Route::new("/home", || println!("home")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("first login")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("second logout")));
+        temp_app
+            .routes
+            .push(Route::new("/item/:itemid/getitem", || {
+                println!("second logout")
+            }));
 
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
@@ -75,7 +85,7 @@ impl<'a> App<'a> {
 
     fn build_request_path(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
-        let req_paths: Vec<&str> = req.path.split_terminator("/").collect();
+        let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
 
         for route in &self.routes {
             let mut is_compatible = true;
@@ -106,8 +116,8 @@ impl<'a> App<'a> {
 
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -115,8 +125,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -124,8 +134,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -133,8 +143,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -142,8 +152,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -159,10 +169,15 @@ mod tests {
     fn test_build_empty() {
         let mut temp_app = App::new();
 
-        temp_app.routes.push(Route::new("/home", || { println!("home") }));
-        temp_app.routes.push(Route::new("/login", || { println!("first login") }));
-        temp_app.routes.push(Route::new("/login", || { println!("second logout") }));
-
+        temp_app
+            .routes
+            .push(Route::new("/home", || println!("home")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("first login")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("second logout")));
 
         let mock_req = r#"GET / HTTP/1.1
 Host: localhost:3000
