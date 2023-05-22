@@ -209,10 +209,15 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
     fn test_build_req_path() {
         let mut temp_app = App::new();
 
-        temp_app.routes.push(Route::new("/home", || { println!("home") }));
-        temp_app.routes.push(Route::new("/login", || { println!("first login") }));
-        temp_app.routes.push(Route::new("/login", || { println!("second logout") }));
-
+        temp_app
+            .routes
+            .push(Route::new("/home", || println!("home")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("first login")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("second logout")));
 
         let mock_req = r#"GET /login HTTP/1.1
 Host: localhost:3000
@@ -240,15 +245,19 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
         assert_eq!(routes.len(), 2);
     }
 
-
     #[test]
     fn test_build_with_dynamic() {
         let mut temp_app = App::new();
 
-        temp_app.routes.push(Route::new("/home", || { println!("home") }));
-        temp_app.routes.push(Route::new("/:user_id/login", || { println!("first login") }));
-        temp_app.routes.push(Route::new("/login", || { println!("second logout") }));
-
+        temp_app
+            .routes
+            .push(Route::new("/home", || println!("home")));
+        temp_app
+            .routes
+            .push(Route::new("/:user_id/login", || println!("first login")));
+        temp_app
+            .routes
+            .push(Route::new("/login", || println!("second logout")));
 
         let mock_req = r#"GET /234sdf/login HTTP/1.1
 Host: localhost:3000
