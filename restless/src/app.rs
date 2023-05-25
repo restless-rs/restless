@@ -11,8 +11,21 @@ use crate::requrest::Req;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
 
-type RouteMap<'a> = Lazy<HashMap<Uuid, Vec<Route<'a>>>>;
+#[allow(dead_code)]
+struct AppContext<'a> {
+    routes: Vec<Route<'a>>,
+}
 
+impl<'a> AppContext<'a> {
+    pub fn new() -> AppContext<'a> {
+        AppContext { routes: vec![] }
+    }
+}
+
+type RouteMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
+
+// NOTE: Currently it unsafe to read and write in from threads
+// TODO: Wrap in `Mutex`
 static mut ROUTE_MAP: RouteMap = Lazy::new(|| { HashMap::new() });
 
 #[allow(dead_code)]
@@ -24,7 +37,13 @@ const BASE_ADDR: &str = "127.0.0.1";
 
 impl App {
     pub fn new() -> App {
-        App { id: Uuid::new_v4() }
+        let id = Uuid::new_v4();
+
+        unsafe {
+            ROUTE_MAP.insert(id, AppContext::new());
+        }
+
+        App { id }
     }
 
     // TODO: Client error handle hook on connection
@@ -42,7 +61,7 @@ impl App {
 
         on_binded();
 
-        let routes = (|| -> &Vec<Route> {
+        let context = (|| -> &AppContext {
             unsafe {
                 return ROUTE_MAP.get(&self.id).unwrap();
             }
@@ -53,7 +72,7 @@ impl App {
 
             tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => handle_stream(routes, stream, addr).await,
+                    Ok((stream, addr)) => handle_stream(context, stream, addr).await,
                     Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
@@ -64,7 +83,7 @@ impl App {
 
 #[allow(unused_variables)]
 #[allow(unused_mut)]
-async fn handle_stream(routes: &Vec<Route<'_>>, mut stream: TcpStream, addr: SocketAddr) {
+async fn handle_stream(routes: &'static AppContext<'_>, mut stream: TcpStream, addr: SocketAddr) {
     let (reader, mut writer) = stream.split();
 
     let mut buf_reader = BufReader::new(reader);
