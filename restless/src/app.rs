@@ -22,11 +22,11 @@ impl<'a> AppContext<'a> {
     }
 }
 
-type RouteMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
+type AppContextMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
 
 // NOTE: Currently it unsafe to read and write in from threads
 // TODO: Wrap in `Mutex`
-static mut ROUTE_MAP: RouteMap = Lazy::new(|| { HashMap::new() });
+static mut APP_CONTEXT_MAP: AppContextMap = Lazy::new(|| { HashMap::new() });
 
 #[allow(dead_code)]
 pub struct App {
@@ -40,7 +40,7 @@ impl App {
         let id = Uuid::new_v4();
 
         unsafe {
-            ROUTE_MAP.insert(id, AppContext::new());
+            APP_CONTEXT_MAP.insert(id, AppContext::new());
         }
 
         App { id }
@@ -63,7 +63,7 @@ impl App {
 
         let context = (|| -> &AppContext {
             unsafe {
-                return ROUTE_MAP.get(&self.id).unwrap();
+                return APP_CONTEXT_MAP.get(&self.id).unwrap();
             }
         })();
 
