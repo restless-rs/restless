@@ -13,7 +13,7 @@ use crate::route_handler::RouteHandler;
 
 #[allow(dead_code)]
 struct AppContext<'a> {
-    routes: Vec<Route<'a>>,
+    pub routes: Vec<Route<'a>>,
 }
 
 impl<'a> AppContext<'a> {
@@ -47,6 +47,7 @@ impl App {
     }
 
     // TODO: Client error handle hook on connection
+    #[allow(unused_variables)]
     #[tokio::main]
     pub async fn listen<F>(self, port: u16, on_binded: F)
     where
@@ -61,14 +62,15 @@ impl App {
 
         on_binded();
 
-        let context = (|| -> &AppContext {
-            unsafe {
-                return APP_CONTEXT_MAP.get(&self.id).unwrap();
-            }
-        })();
-
         loop /* of pain and suffer */ {
             let result = listener.accept().await;
+
+            let context = (|| -> &mut AppContext {
+                unsafe {
+                    let result = APP_CONTEXT_MAP.get_mut(&self.id);
+                    return result.unwrap();
+                }
+            })();
 
             tokio::spawn(async move {
                 match result {
@@ -83,13 +85,15 @@ impl App {
 
 #[allow(unused_variables)]
 #[allow(unused_mut)]
-async fn handle_stream(routes: &'static AppContext<'_>, mut stream: TcpStream, addr: SocketAddr) {
+async fn handle_stream(context: &'static mut AppContext<'_>, mut stream: TcpStream, addr: SocketAddr) {
     let (reader, mut writer) = stream.split();
 
     let mut buf_reader = BufReader::new(reader);
     let mut raw_req = String::new();
 
     buf_reader.read_to_string(&mut raw_req).await.unwrap();
+
+    context.routes.push(Route::new("/foo", || {}));
 
     let req = Req::new(&raw_req);
 
