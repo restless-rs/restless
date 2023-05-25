@@ -7,6 +7,7 @@ use crate::requrest::Req;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
 
+#[allow(dead_code)]
 pub struct App<'a> {
     routes: Vec<Route<'a>>,
 }
@@ -33,34 +34,35 @@ impl<'a> App<'a> {
 
         on_binded();
 
-        loop /* of pain and suffer */ {
-
+        loop
+        /* of pain and suffer */
+        {
             let result = listener.accept().await;
 
             tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => self.handle_stream(stream, addr).await,
+                    Ok((stream, addr)) => handle_stream(stream, addr).await,
                     Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
         }
     }
+}
 
-    #[allow(unused_variables)]
-    #[allow(unused_mut)]
-    async fn handle_stream(&self, mut stream: TcpStream, addr: SocketAddr) {
-        let (reader, mut writer) = stream.split();
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
+    let (reader, mut writer) = stream.split();
 
-        let mut buf_reader = BufReader::new(reader);
-        let mut raw_req = String::new();
+    let mut buf_reader = BufReader::new(reader);
+    let mut raw_req = String::new();
 
-        buf_reader.read_to_string(&mut raw_req).await.unwrap();
+    buf_reader.read_to_string(&mut raw_req).await.unwrap();
 
-        let req = Req::new(&raw_req);
+    let req = Req::new(&raw_req);
 
-        println!("Handled stream at {}", addr);
-        // TODO: Parse stream
-    }
+    println!("Handled stream at {}", addr);
+    // TODO: Parse stream
 }
 
 #[allow(unused_variables)]
