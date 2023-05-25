@@ -26,7 +26,7 @@ type AppContextMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
 
 // NOTE: Currently it unsafe to read and write in from threads
 // TODO: Wrap in `Mutex`
-static mut APP_CONTEXT_MAP: AppContextMap = Lazy::new(|| { HashMap::new() });
+static mut APP_CONTEXT_MAP: AppContextMap = Lazy::new(|| HashMap::new());
 
 #[allow(dead_code)]
 pub struct App {
@@ -62,7 +62,9 @@ impl App {
 
         on_binded();
 
-        loop /* of pain and suffer */ {
+        loop
+        /* of pain and suffer */
+        {
             let result = listener.accept().await;
 
             let context = (|| -> &mut AppContext {
@@ -78,14 +80,17 @@ impl App {
                     Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
-
         }
     }
 }
 
 #[allow(unused_variables)]
 #[allow(unused_mut)]
-async fn handle_stream(context: &'static mut AppContext<'_>, mut stream: TcpStream, addr: SocketAddr) {
+async fn handle_stream(
+    context: &'static mut AppContext<'_>,
+    mut stream: TcpStream,
+    addr: SocketAddr,
+) {
     let (reader, mut writer) = stream.split();
 
     let mut buf_reader = BufReader::new(reader);
