@@ -1,27 +1,35 @@
+use std::collections::HashMap;
 use std::net::SocketAddr;
 
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
+use once_cell::sync::Lazy;
+use uuid::Uuid;
+
 use crate::requrest::Req;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
 
+type RouteMap<'a> = Lazy<HashMap<Uuid, Vec<Route<'a>>>>;
+
+static mut ROUTE_MAP: RouteMap = Lazy::new(|| { HashMap::new() });
+
 #[allow(dead_code)]
-pub struct App<'a> {
-    routes: Vec<Route<'a>>,
+pub struct App {
+    id: Uuid,
 }
 
 const BASE_ADDR: &str = "127.0.0.1";
 
-impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
-        App { routes: vec![] }
+impl App {
+    pub fn new() -> App {
+        App { id: Uuid::new_v4() }
     }
 
     // TODO: Client error handle hook on connection
     #[tokio::main]
-    pub async fn listen<F>(&'a self, port: u16, on_binded: F)
+    pub async fn listen<F>(self, port: u16, on_binded: F)
     where
         F: FnOnce(),
     {
@@ -34,24 +42,29 @@ impl<'a> App<'a> {
 
         on_binded();
 
-        loop
-        /* of pain and suffer */
-        {
+        let routes = (|| -> &Vec<Route> {
+            unsafe {
+                return ROUTE_MAP.get(&self.id).unwrap();
+            }
+        })();
+
+        loop /* of pain and suffer */ {
             let result = listener.accept().await;
 
             tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => handle_stream(stream, addr).await,
+                    Ok((stream, addr)) => handle_stream(routes, stream, addr).await,
                     Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
+
         }
     }
 }
 
 #[allow(unused_variables)]
 #[allow(unused_mut)]
-async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
+async fn handle_stream(routes: &Vec<Route<'_>>, mut stream: TcpStream, addr: SocketAddr) {
     let (reader, mut writer) = stream.split();
 
     let mut buf_reader = BufReader::new(reader);
@@ -67,7 +80,7 @@ async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
 
 #[allow(unused_variables)]
 #[allow(unreachable_code)]
-impl RouteHandler for App<'_> {
+impl RouteHandler for App {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
