@@ -28,22 +28,40 @@ type AppContextMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
 // TODO: Wrap in `Mutex`
 static mut APP_CONTEXT_MAP: AppContextMap = Lazy::new(|| HashMap::new());
 
+fn get_app_context<'a>(id: Uuid) -> &'a mut AppContext<'static> {
+    unsafe {
+        let result = APP_CONTEXT_MAP.get_mut(&id);
+        return result.unwrap();
+    }
+}
+
+fn set_app_context(id: Uuid) {
+    unsafe {
+        APP_CONTEXT_MAP.insert(id, AppContext::new());
+    }
+}
+
 #[allow(dead_code)]
-pub struct App {
+pub struct App<'a> {
     id: Uuid,
+    context: &'a AppContext<'a>,
 }
 
 const BASE_ADDR: &str = "127.0.0.1";
 
-impl App {
-    pub fn new() -> App {
+impl<'a> App<'a> {
+    pub fn new() -> App<'a> {
         let id = Uuid::new_v4();
+        set_app_context(id);
+        App { id, context: get_app_context(id) }
+    }
 
-        unsafe {
-            APP_CONTEXT_MAP.insert(id, AppContext::new());
-        }
+    pub fn get_routes(self) -> &'a Vec<Route<'a>> {
+        get_app_context(self.id).routes.as_ref()
+    }
 
-        App { id }
+    fn get_context(&self) -> &'static mut AppContext<'static> {
+        get_app_context(self.id)
     }
 
     // TODO: Client error handle hook on connection
@@ -67,12 +85,7 @@ impl App {
         {
             let result = listener.accept().await;
 
-            let context = (|| -> &mut AppContext {
-                unsafe {
-                    let result = APP_CONTEXT_MAP.get_mut(&self.id);
-                    return result.unwrap();
-                }
-            })();
+            let context = self.get_context();
 
             tokio::spawn(async move {
                 match result {
@@ -108,7 +121,7 @@ async fn handle_stream(
 
 #[allow(unused_variables)]
 #[allow(unreachable_code)]
-impl RouteHandler for App {
+impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
