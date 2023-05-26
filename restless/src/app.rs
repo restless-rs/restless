@@ -1,73 +1,31 @@
-use std::collections::HashMap;
 use std::net::SocketAddr;
 
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
-use uuid::Uuid;
 
 use crate::requrest::Req;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
 
-#[allow(dead_code)]
-struct AppContext<'a> {
+const BASE_ADDR: &str = "127.0.0.1";
+
+pub struct App<'a> {
     pub routes: Vec<Route<'a>>,
 }
 
-impl<'a> AppContext<'a> {
-    pub fn new() -> AppContext<'a> {
-        AppContext { routes: vec![] }
-    }
-}
+static mut APP: Lazy<App<'static>> = Lazy::new(|| App { routes: vec![] });
 
-type AppContextMap<'a> = Lazy<HashMap<Uuid, AppContext<'a>>>;
-
-// NOTE: Currently it unsafe to read and write in from threads
-// TODO: Wrap in `Mutex`
-static mut APP_CONTEXT_MAP: AppContextMap = Lazy::new(|| HashMap::new());
-
-fn get_app_context<'a>(id: Uuid) -> &'a mut AppContext<'static> {
-    unsafe {
-        let result = APP_CONTEXT_MAP.get_mut(&id);
-        return result.unwrap();
-    }
-}
-
-fn set_app_context(id: Uuid) {
-    unsafe {
-        APP_CONTEXT_MAP.insert(id, AppContext::new());
-    }
-}
-
-#[allow(dead_code)]
-pub struct App<'a> {
-    id: Uuid,
-    context: &'a AppContext<'a>,
-}
-
-const BASE_ADDR: &str = "127.0.0.1";
-
-impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
-        let id = Uuid::new_v4();
-        set_app_context(id);
-        App { id, context: get_app_context(id) }
-    }
-
-    pub fn get_routes(self) -> &'a Vec<Route<'a>> {
-        get_app_context(self.id).routes.as_ref()
-    }
-
-    fn get_context(&self) -> &'static mut AppContext<'static> {
-        get_app_context(self.id)
+impl App<'static> {
+    pub fn new() -> &'static Lazy<App<'static>> {
+        unsafe { &APP }
     }
 
     // TODO: Client error handle hook on connection
     #[allow(unused_variables)]
     #[tokio::main]
-    pub async fn listen<F>(self, port: u16, on_binded: F)
+    pub async fn listen<F>(&'static self, port: u16, on_binded: F)
     where
         F: FnOnce(),
     {
@@ -85,38 +43,30 @@ impl<'a> App<'a> {
         {
             let result = listener.accept().await;
 
-            let context = self.get_context();
-
             tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => handle_stream(context, stream, addr).await,
+                    Ok((stream, addr)) => self.handle_stream(stream, addr).await,
                     Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
         }
     }
-}
 
-#[allow(unused_variables)]
-#[allow(unused_mut)]
-async fn handle_stream(
-    context: &'static mut AppContext<'_>,
-    mut stream: TcpStream,
-    addr: SocketAddr,
-) {
-    let (reader, mut writer) = stream.split();
+    #[allow(unused_variables)]
+    #[allow(unused_mut)]
+    async fn handle_stream(&'static self, mut stream: TcpStream, addr: SocketAddr) {
+        let (reader, mut writer) = stream.split();
 
-    let mut buf_reader = BufReader::new(reader);
-    let mut raw_req = String::new();
+        let mut buf_reader = BufReader::new(reader);
+        let mut raw_req = String::new();
 
-    buf_reader.read_to_string(&mut raw_req).await.unwrap();
+        buf_reader.read_to_string(&mut raw_req).await.unwrap();
 
-    context.routes.push(Route::new("/foo", || {}));
+        let req = Req::new(&raw_req);
 
-    let req = Req::new(&raw_req);
-
-    println!("Handled stream at {}", addr);
-    // TODO: Parse stream
+        println!("Handled stream at {}", addr);
+        // TODO: Parse stream
+    }
 }
 
 #[allow(unused_variables)]
@@ -127,8 +77,6 @@ impl RouteHandler for App<'_> {
         F: Fn(),
     {
         todo!();
-
-        self
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
