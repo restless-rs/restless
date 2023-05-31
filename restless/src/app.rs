@@ -67,17 +67,21 @@ impl<'a> App<'a> {
         temp_app
             .routes
             .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("first login"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("second logout"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/item/:itemid/getitem", || {
-                println!("second logout")
-            }, Some("GET")));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("first login"),
+            Some("GET"),
+        ));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("second logout"),
+            Some("GET"),
+        ));
+        temp_app.routes.push(Route::new(
+            "/item/:itemid/getitem",
+            || println!("second logout"),
+            Some("GET"),
+        ));
 
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
@@ -172,12 +176,16 @@ mod tests {
         temp_app
             .routes
             .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("first login"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("second logout"), Some("GET")));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("first login"),
+            Some("GET"),
+        ));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("second logout"),
+            Some("GET"),
+        ));
 
         let mock_req = r#"GET / HTTP/1.1
 Host: localhost:3000
@@ -212,12 +220,16 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
         temp_app
             .routes
             .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("first login"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("second logout"), Some("GET")));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("first login"),
+            Some("GET"),
+        ));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("second logout"),
+            Some("GET"),
+        ));
 
         let mock_req = r#"GET /login HTTP/1.1
 Host: localhost:3000
@@ -252,12 +264,16 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
         temp_app
             .routes
             .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/:user_id/login", || println!("first login"), Some("GET")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("second logout"), Some("GET")));
+        temp_app.routes.push(Route::new(
+            "/:user_id/login",
+            || println!("first login"),
+            Some("GET"),
+        ));
+        temp_app.routes.push(Route::new(
+            "/login",
+            || println!("second logout"),
+            Some("GET"),
+        ));
 
         let mock_req = r#"GET /234sdf/login HTTP/1.1
 Host: localhost:3000
