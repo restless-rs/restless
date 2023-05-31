@@ -26,7 +26,7 @@ pub struct Route<'a> {
 }
 
 impl Route<'_> {
-    pub fn new(path: &str, handler: fn(), method: Option<&str>) -> Route {
+    pub fn new<'a>(path: &'a str, handler: fn(), method: Option<&'a str>) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,
@@ -59,6 +59,6 @@ mod tests {
 
     #[test]
     fn create_route() {
-        let route = Route::new("/", || {});
+        let route = Route::new("/", || {}, None);
     }
 }
