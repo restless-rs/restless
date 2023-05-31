@@ -66,18 +66,18 @@ impl<'a> App<'a> {
         let mut temp_app = App::new();
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home")));
+            .push(Route::new("/home", || println!("home"), Some("GET")));
         temp_app
             .routes
-            .push(Route::new("/login", || println!("first login")));
+            .push(Route::new("/login", || println!("first login"), Some("GET")));
         temp_app
             .routes
-            .push(Route::new("/login", || println!("second logout")));
+            .push(Route::new("/login", || println!("second logout"), Some("GET")));
         temp_app
             .routes
             .push(Route::new("/item/:itemid/getitem", || {
                 println!("second logout")
-            }));
+            }, Some("GET")));
 
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
