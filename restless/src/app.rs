@@ -39,9 +39,7 @@ impl App<'static> {
 
         on_binded();
 
-        loop
-        /* of pain and suffer */
-        {
+        loop {
             let result = listener.accept().await;
 
             tokio::spawn(async move {
@@ -63,32 +61,11 @@ impl App<'static> {
 
         buf_reader.read_to_string(&mut raw_req).await.unwrap();
 
-        println!("{raw_req}");
         let req = Req::new(&raw_req);
 
-        // TODO: Rewrite to call self.App
-        let mut temp_app = App::new();
-        temp_app
-            .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("first login"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("second logout"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/item/:itemid/getitem",
-            || println!("second logout"),
-            Some("GET"),
-        ));
-
-        println!("Handled stream at {}", addr);
-        // TODO: Parse stream
+        for route in self.build_request_path(&req) {
+            (route.handler);
+        }
     }
 
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
@@ -122,49 +99,29 @@ impl App<'static> {
     }
 }
 
-#[allow(unused_variables)]
-#[allow(unreachable_code)]
 impl RouteHandler for App<'_> {
-    fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-    }
-
-    fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn get(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("GET")));
         self
     }
 
-    fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn post(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("POST")));
         self
     }
 
-    fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn put(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("PUT")));
         self
     }
 
-    fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
+    fn delete(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("DELETE")));
+        self
+    }
 
+    fn patch(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("PATCH")));
         self
     }
 }
@@ -219,7 +176,7 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
     #[test]
     fn test_build_req_path() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes
