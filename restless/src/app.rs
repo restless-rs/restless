@@ -19,8 +19,8 @@ pub struct App<'a> {
 static mut APP: Lazy<App<'static>> = Lazy::new(|| App { routes: vec![] });
 
 impl App<'static> {
-    pub fn new() -> &'static Lazy<App<'static>> {
-        unsafe { &APP }
+    pub fn new() -> &'static mut Lazy<App<'static>> {
+        unsafe { &mut APP }
     }
 
     // TODO: Client error handle hook on connection
@@ -66,28 +66,12 @@ impl App<'static> {
         println!("{raw_req}");
         let req = Req::new(&raw_req);
 
-        // TODO: Rewrite to call self.App
-        let mut temp_app = App::new();
-        temp_app
-            .routes
-            .push(Route::new("/home", || println!("home")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("first login")));
-        temp_app
-            .routes
-            .push(Route::new("/login", || println!("second logout")));
-        temp_app
-            .routes
-            .push(Route::new("/item/:itemid/getitem", || {
-                println!("second logout")
-            }));
 
         println!("Handled stream at {}", addr);
         // TODO: Parse stream
     }
 
-    fn build_request_path(&self, req: &'a Req) -> Vec<&Route<'a>> {
+    fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
         let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
 
@@ -171,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_build_empty() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes
