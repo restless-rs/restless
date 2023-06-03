@@ -59,7 +59,6 @@ impl<'a> App<'a> {
 
         buf_reader.read_to_string(&mut raw_req).await.unwrap();
 
-        println!("{raw_req}");
         let req = Req::new(&raw_req);
 
         // TODO: Rewrite to call self.App

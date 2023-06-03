@@ -1,12 +1,19 @@
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::hash::Hash;
 use std::str::FromStr;
 use tokio::io;
 
+#[derive(Debug)]
+pub enum ReqBody<'a> {
+    String(&'a str),
+    Json(HashMap<&'a str, &'a str>)
+}
+
 #[derive(Default, Debug)]
 pub struct Req<'a> {
-    pub body: Option<String>,
+    pub body: Option<ReqBody<'a>>,
     pub path: &'a str,
     pub method: ReqMethod,
     pub hostname: &'a str,
@@ -79,16 +86,17 @@ impl<'a> Req<'a> {
 
         // Pulling body
         let body = lines
-            .clone()
             .skip_while(|l| !l.is_empty())
             .fold(String::new(), |mut acc, l| {
                 acc += l;
                 acc
             });
 
-        if !body.is_empty() {
-            req.body = Some(body);
-        };
+        let content_type = req.get("Content-Type").expect("Must have content Type");
+        if content_type == "application/json" {
+            let parsed_body = serde_json::from_str::<HashMap<&str, &str>>(&*body).unwrap();
+            req.body = Some(ReqBody::Json(parsed_body));
+        }
 
         req
     }
