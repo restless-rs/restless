@@ -21,13 +21,15 @@ impl PathItem<'_> {
 #[derive(Debug)]
 pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
+    pub method: Option<&'a str>,
     pub handler: fn(),
 }
 
 impl Route<'_> {
-    pub fn new(path: &str, handler: fn()) -> Route {
+    pub fn new<'a>(path: &'a str, handler: fn(), method: Option<&'a str>) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
+            method,
             handler,
         }
     }
@@ -57,6 +59,6 @@ mod tests {
 
     #[test]
     fn create_route() {
-        let route = Route::new("/", || {});
+        let route = Route::new("/", || {}, None);
     }
 }
