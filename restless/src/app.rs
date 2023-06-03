@@ -3,25 +3,30 @@ use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
+use once_cell::sync::Lazy;
+
 use crate::requrest::Req;
 use crate::route::PathItemType;
 use crate::route::Route;
-use crate::router::RouteHandler;
-
-pub struct App<'a> {
-    routes: Vec<Route<'a>>,
-}
+use crate::route_handler::RouteHandler;
 
 const BASE_ADDR: &str = "127.0.0.1";
 
-impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
-        App { routes: vec![] }
+pub struct App<'a> {
+    pub routes: Vec<Route<'a>>,
+}
+
+static mut APP: Lazy<App<'static>> = Lazy::new(|| App { routes: vec![] });
+
+impl App<'static> {
+    pub fn new() -> &'static mut Lazy<App<'static>> {
+        unsafe { &mut APP }
     }
 
     // TODO: Client error handle hook on connection
+    #[allow(unused_variables)]
     #[tokio::main]
-    pub async fn listen<F>(&mut self, port: u16, on_binded: F)
+    pub async fn listen<F>(&'static self, port: u16, on_binded: F)
     where
         F: FnOnce(),
     {
@@ -34,24 +39,23 @@ impl<'a> App<'a> {
 
         on_binded();
 
-        loop {
-            // TODO: Benchmark stream handling
-            // NOTE: This can cause high latency because we awaiting result of
-            // connection in main loop with `.await`
+        loop
+        /* of pain and suffer */
+        {
             let result = listener.accept().await;
-            //                            ^^^^^^
-            tokio::spawn(async {
+
+            tokio::spawn(async move {
                 match result {
-                    Ok((stream, addr)) => App::handle_stream(stream, addr).await,
-                    Err(err) => {
-                        println!("Couldn't get client: {:?}", err);
-                    }
+                    Ok((stream, addr)) => self.handle_stream(stream, addr).await,
+                    Err(err) => println!("Couldn't get client: {:?}", err),
                 }
             });
         }
     }
 
-    async fn handle_stream(mut stream: TcpStream, addr: SocketAddr) {
+    #[allow(unused_variables)]
+    #[allow(unused_mut)]
+    async fn handle_stream(&'static self, mut stream: TcpStream, addr: SocketAddr) {
         let (reader, mut writer) = stream.split();
 
         let mut buf_reader = BufReader::new(reader);
@@ -87,7 +91,7 @@ impl<'a> App<'a> {
         // TODO: Parse stream
     }
 
-    fn build_request_path(&self, req: &'a Req) -> Vec<&Route<'a>> {
+    fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
         let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
 
@@ -118,14 +122,14 @@ impl<'a> App<'a> {
     }
 }
 
+#[allow(unused_variables)]
+#[allow(unreachable_code)]
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
         F: Fn(),
     {
         todo!();
-
-        self
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
@@ -171,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_build_empty() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes
