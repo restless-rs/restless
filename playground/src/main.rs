@@ -1,9 +1,11 @@
 use restless::app::App;
-use restless::router::RouteHandler;
+use restless::route_handler::RouteHandler;
 
 fn main() {
     let port = 3000;
-    let mut app = App::new();
+    let app = App::new();
+
+    app.get("/index", || {});
 
     app.listen(port, || println!("Bind at {port} port"));
 }
