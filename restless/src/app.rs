@@ -31,8 +31,8 @@ impl App<'static> {
     // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&'static self, port: u16, on_bound: F)
-        where
-            F: FnOnce(),
+    where
+        F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -94,9 +94,7 @@ impl App<'static> {
             // if the readiness event is a false positive.
             match read_half.try_read(&mut tmp_buf) {
                 Ok(0) => break,
-                Ok(_) => {
-                    buf.extend_from_slice(&tmp_buf)
-                }
+                Ok(_) => buf.extend_from_slice(&tmp_buf),
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                     break;
                 }
@@ -104,11 +102,12 @@ impl App<'static> {
                     return Err(e.into());
                 }
             }
-
         }
 
-        return Ok(std::str::from_utf8(&buf).unwrap().trim_matches(char::from(0)).to_owned())
-
+        return Ok(std::str::from_utf8(&buf)
+            .unwrap()
+            .trim_matches(char::from(0))
+            .to_owned());
     }
 
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
@@ -144,15 +143,15 @@ impl App<'static> {
 
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -160,8 +159,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -169,8 +168,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -178,8 +177,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 

@@ -1,13 +1,13 @@
+use crate::app::App;
 use std::collections::HashMap;
-use tokio::io::{AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::WriteHalf;
 use tokio::net::TcpStream;
-use crate::app::App;
 
 pub struct Res<'a> {
     stream: WriteHalf<'a>,
     status: usize,
-    headers: HashMap<&'a str, &'a str>
+    headers: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> Res<'a> {
@@ -15,7 +15,7 @@ impl<'a> Res<'a> {
         let mut res = Res {
             status: 200,
             headers: HashMap::new(),
-            stream
+            stream,
         };
 
         res
@@ -45,7 +45,6 @@ impl<'a> Res<'a> {
         raw_res += "\r\n\r\n";
 
         raw_res += body;
-
 
         let _ = self.stream.write_all(raw_res.as_bytes()).await.unwrap();
         self.stream.flush().await.unwrap();
