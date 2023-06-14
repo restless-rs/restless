@@ -77,11 +77,11 @@ impl App<'static> {
         let raw_req = self.read_all(&mut read_half).await.unwrap();
         let req = Req::new(&*raw_req);
 
-        write_half.write_all(b"HTTP/1.1 200 OK\r\n\r\nHello, Tokio!").await.unwrap();
-        write_half.flush().await.unwrap();
+        let mut res = Res::new(write_half);
+        res.send("Hello, Tokio!").await;
     }
 
-    async fn read_all<'a>(&self, stream: &mut ReadHalf<'_>) -> Result<String, std::io::Error> {
+    async fn read_all<'a>(&self, read_half: &mut ReadHalf<'a>) -> Result<String, std::io::Error> {
         // https://stackoverflow.com/a/71949195
         let mut buf: Vec<u8> = Vec::new();
 
@@ -92,7 +92,7 @@ impl App<'static> {
 
             // Try to read data, this may still fail with `WouldBlock`
             // if the readiness event is a false positive.
-            match stream.try_read(&mut tmp_buf) {
+            match read_half.try_read(&mut tmp_buf) {
                 Ok(0) => break,
                 Ok(_) => {
                     buf.extend_from_slice(&tmp_buf)

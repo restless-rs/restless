@@ -1,30 +1,33 @@
 use std::collections::HashMap;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt};
+use tokio::net::tcp::WriteHalf;
 use tokio::net::TcpStream;
 use crate::app::App;
 
-#[derive(Default)]
-pub struct Response<'a> {
-    stream: &'a mut TcpStream,
+pub struct Res<'a> {
+    stream: WriteHalf<'a>,
     status: usize,
     headers: HashMap<&'a str, &'a str>
 }
 
-impl Response {
-    pub fn new(&mut stream: TcpStream) -> Response {
-        let mut res = Response::default();
-        res.stream = stream;
+impl<'a> Res<'a> {
+    pub fn new(stream: WriteHalf<'a>) -> Res<'a> {
+        let mut res = Res {
+            status: 200,
+            headers: HashMap::new(),
+            stream
+        };
 
         res
     }
 
-    pub fn status(&mut self, status: usize) -> &mut Response {
+    pub fn status(&'a mut self, status: usize) -> &mut Res {
         self.status = status;
 
         self
     }
 
-    pub fn set(&mut self, header_key: &str, header_value: &str) -> &mut Response {
+    pub fn set(&'a mut self, header_key: &'a str, header_value: &'a str) -> &'a mut Res {
         self.headers.insert(header_key, header_value);
 
         self
@@ -36,7 +39,15 @@ impl Response {
         Some(header_value)
     }
 
-    pub fn send(&self, body: &str) {
-        let _ = self.stream.write_all(body.as_ref());
+    pub async fn send(&mut self, body: &str) {
+        let mut raw_res = String::from("HTTP/1.1");
+        raw_res += &*format!(" {} ", self.status);
+        raw_res += "\r\n\r\n";
+
+        raw_res += body;
+
+
+        let _ = self.stream.write_all(raw_res.as_bytes()).await.unwrap();
+        self.stream.flush().await.unwrap();
     }
 }
