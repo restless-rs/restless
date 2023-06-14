@@ -1,11 +1,16 @@
+use std::fs::read;
+use std::mem::transmute;
 use std::net::SocketAddr;
 
-use tokio::io::{AsyncReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
+use tokio::net::tcp::ReadHalf;
+use tokio::time::error::Error;
 
 use crate::requrest::Req;
+use crate::response::Res;
 use crate::route::PathItemType;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
@@ -24,11 +29,10 @@ impl App<'static> {
     }
 
     // TODO: Client error handle hook on connection
-    #[allow(unused_variables)]
     #[tokio::main]
-    pub async fn listen<F>(&'static self, port: u16, on_binded: F)
-    where
-        F: FnOnce(),
+    pub async fn listen<F>(&'static self, port: u16, on_bound: F)
+        where
+            F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -37,11 +41,25 @@ impl App<'static> {
             .await
             .expect(format!("Can't bound at {}", addr).as_str());
 
-        on_binded();
+        on_bound();
 
-        loop
         /* of pain and suffer */
-        {
+        loop {
+            // let (mut socket, _addr) = listener.accept().await.unwrap();
+            //
+            // let (mut read_half, mut write_half) = socket.split();
+            //
+            // let mut reader = BufReader::new(read_half);
+            // let mut line = String::new();
+            //
+            // let bytes_read = reader.read_line(&mut line).await.unwrap();
+            // println!("{line}");
+            // if bytes_read == 0 {
+            //     break;
+            // }
+
+            // write_half.write_all(line.as_bytes()).await.unwrap();
+            // line.clear();
             let result = listener.accept().await;
 
             tokio::spawn(async move {
@@ -53,42 +71,44 @@ impl App<'static> {
         }
     }
 
-    #[allow(unused_variables)]
-    #[allow(unused_mut)]
-    async fn handle_stream(&'static self, mut stream: TcpStream, addr: SocketAddr) {
-        let (reader, mut writer) = stream.split();
+    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, addr: SocketAddr) {
+        let (mut read_half, mut write_half) = socket.split();
 
-        let mut buf_reader = BufReader::new(reader);
-        let mut raw_req = String::new();
+        let raw_req = self.read_all(&mut read_half).await.unwrap();
+        let req = Req::new(&*raw_req);
 
-        buf_reader.read_to_string(&mut raw_req).await.unwrap();
+        write_half.write_all(b"HTTP/1.1 200 OK\r\n\r\nHello, Tokio!").await.unwrap();
+        write_half.flush().await.unwrap();
+    }
 
-        println!("{raw_req}");
-        let req = Req::new(&raw_req);
+    async fn read_all<'a>(&self, stream: &mut ReadHalf<'_>) -> Result<String, std::io::Error> {
+        // https://stackoverflow.com/a/71949195
+        let mut buf: Vec<u8> = Vec::new();
 
-        // TODO: Rewrite to call self.App
-        let mut temp_app = App::new();
-        temp_app
-            .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("first login"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("second logout"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/item/:itemid/getitem",
-            || println!("second logout"),
-            Some("GET"),
-        ));
+        loop {
+            // Creating the buffer **after** the `await` prevents it from
+            // being stored in the async task.
+            let mut tmp_buf = [0u8; 4096];
 
-        println!("Handled stream at {}", addr);
-        // TODO: Parse stream
+            // Try to read data, this may still fail with `WouldBlock`
+            // if the readiness event is a false positive.
+            match stream.try_read(&mut tmp_buf) {
+                Ok(0) => break,
+                Ok(_) => {
+                    buf.extend_from_slice(&tmp_buf)
+                }
+                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    break;
+                }
+                Err(e) => {
+                    return Err(e.into());
+                }
+            }
+
+        }
+
+        return Ok(std::str::from_utf8(&buf).unwrap().trim_matches(char::from(0)).to_owned())
+
     }
 
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
@@ -122,19 +142,17 @@ impl App<'static> {
     }
 }
 
-#[allow(unused_variables)]
-#[allow(unreachable_code)]
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -142,8 +160,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -151,8 +169,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -160,8 +178,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
