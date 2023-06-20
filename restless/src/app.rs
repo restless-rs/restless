@@ -2,11 +2,13 @@ use std::fs::read;
 use std::mem::transmute;
 use std::net::SocketAddr;
 
+use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
 use tokio::net::tcp::ReadHalf;
+use tokio::task::spawn_blocking;
 use tokio::time::error::Error;
 
 use crate::requrest::Req;
@@ -31,8 +33,8 @@ impl App<'static> {
     // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&'static self, port: u16, on_bound: F)
-    where
-        F: FnOnce(),
+        where
+            F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -45,21 +47,6 @@ impl App<'static> {
 
         /* of pain and suffer */
         loop {
-            // let (mut socket, _addr) = listener.accept().await.unwrap();
-            //
-            // let (mut read_half, mut write_half) = socket.split();
-            //
-            // let mut reader = BufReader::new(read_half);
-            // let mut line = String::new();
-            //
-            // let bytes_read = reader.read_line(&mut line).await.unwrap();
-            // println!("{line}");
-            // if bytes_read == 0 {
-            //     break;
-            // }
-
-            // write_half.write_all(line.as_bytes()).await.unwrap();
-            // line.clear();
             let result = listener.accept().await;
 
             tokio::spawn(async move {
@@ -75,7 +62,7 @@ impl App<'static> {
         let (mut read_half, mut write_half) = socket.split();
 
         let raw_req = self.read_all(&mut read_half).await.unwrap();
-        let req = Req::new(&*raw_req);
+        // let req = Req::new(&*raw_req);
 
         let mut res = Res::new(write_half);
         res.send("Hello, Tokio!").await;
@@ -85,16 +72,21 @@ impl App<'static> {
         // https://stackoverflow.com/a/71949195
         let mut buf: Vec<u8> = Vec::new();
 
+        // Solve would block problems
+        let mut firs_read_buf = [0u8; 2024];
+        read_half.read(&mut firs_read_buf).await.unwrap();
+        buf.extend_from_slice(&firs_read_buf);
+
         loop {
             // Creating the buffer **after** the `await` prevents it from
             // being stored in the async task.
-            let mut tmp_buf = [0u8; 4096];
+            let mut tmp_buf = [0u8; 1024];
 
             // Try to read data, this may still fail with `WouldBlock`
             // if the readiness event is a false positive.
             match read_half.try_read(&mut tmp_buf) {
                 Ok(0) => break,
-                Ok(_) => buf.extend_from_slice(&tmp_buf),
+                Ok(bytes_read) => buf.extend_from_slice(&tmp_buf[..bytes_read]),
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                     break;
                 }
@@ -143,15 +135,15 @@ impl App<'static> {
 
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -159,8 +151,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -168,8 +160,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
@@ -177,8 +169,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
+        where
+            F: Fn(),
     {
         todo!();
 
