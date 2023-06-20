@@ -13,7 +13,6 @@ pub struct Res<'a> {
 
 static STATUS_TITLES: Lazy<HashMap<usize, &'static str>> = Lazy::new(|| {
     HashMap::from([
-        (200, "OK"),
         (100, "Continue"),
         (101, "Switching"),
         (102, "Processing"),
