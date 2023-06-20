@@ -1,11 +1,18 @@
+use std::fs::read;
+use std::mem::transmute;
 use std::net::SocketAddr;
 
-use tokio::io::{AsyncReadExt, BufReader};
+use std::time::Duration;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
+use tokio::net::tcp::ReadHalf;
+use tokio::task::spawn_blocking;
+use tokio::time::error::Error;
 
 use crate::requrest::Req;
+use crate::response::Res;
 use crate::route::PathItemType;
 use crate::route::Route;
 use crate::route_handler::RouteHandler;
@@ -24,9 +31,8 @@ impl App<'static> {
     }
 
     // TODO: Client error handle hook on connection
-    #[allow(unused_variables)]
     #[tokio::main]
-    pub async fn listen<F>(&'static self, port: u16, on_binded: F)
+    pub async fn listen<F>(&'static self, port: u16, on_bound: F)
     where
         F: FnOnce(),
     {
@@ -37,11 +43,10 @@ impl App<'static> {
             .await
             .expect(format!("Can't bound at {}", addr).as_str());
 
-        on_binded();
+        on_bound();
 
-        loop
         /* of pain and suffer */
-        {
+        loop {
             let result = listener.accept().await;
 
             tokio::spawn(async move {
@@ -53,42 +58,48 @@ impl App<'static> {
         }
     }
 
-    #[allow(unused_variables)]
-    #[allow(unused_mut)]
-    async fn handle_stream(&'static self, mut stream: TcpStream, addr: SocketAddr) {
-        let (reader, mut writer) = stream.split();
+    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, addr: SocketAddr) {
+        let (mut read_half, mut write_half) = socket.split();
 
-        let mut buf_reader = BufReader::new(reader);
-        let mut raw_req = String::new();
+        let raw_req = self.read_all(&mut read_half).await.unwrap();
+        // let req = Req::new(&*raw_req);
 
-        buf_reader.read_to_string(&mut raw_req).await.unwrap();
+        let mut res = Res::new(write_half);
+        res.send("Hello, Tokio!").await;
+    }
 
-        println!("{raw_req}");
-        let req = Req::new(&raw_req);
+    async fn read_all<'a>(&self, read_half: &mut ReadHalf<'a>) -> Result<String, std::io::Error> {
+        // https://stackoverflow.com/a/71949195
+        let mut buf: Vec<u8> = Vec::new();
 
-        // TODO: Rewrite to call self.App
-        let mut temp_app = App::new();
-        temp_app
-            .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("first login"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            || println!("second logout"),
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/item/:itemid/getitem",
-            || println!("second logout"),
-            Some("GET"),
-        ));
+        // Solve would block problems
+        let mut firs_read_buf = [0u8; 2024];
+        read_half.read(&mut firs_read_buf).await.unwrap();
+        buf.extend_from_slice(&firs_read_buf);
 
-        println!("Handled stream at {}", addr);
-        // TODO: Parse stream
+        loop {
+            // Creating the buffer **after** the `await` prevents it from
+            // being stored in the async task.
+            let mut tmp_buf = [0u8; 1024];
+
+            // Try to read data, this may still fail with `WouldBlock`
+            // if the readiness event is a false positive.
+            match read_half.try_read(&mut tmp_buf) {
+                Ok(0) => break,
+                Ok(bytes_read) => buf.extend_from_slice(&tmp_buf[..bytes_read]),
+                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    break;
+                }
+                Err(e) => {
+                    return Err(e.into());
+                }
+            }
+        }
+
+        return Ok(std::str::from_utf8(&buf)
+            .unwrap()
+            .trim_matches(char::from(0))
+            .to_owned());
     }
 
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
@@ -122,8 +133,6 @@ impl App<'static> {
     }
 }
 
-#[allow(unused_variables)]
-#[allow(unreachable_code)]
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
     where
