@@ -33,8 +33,8 @@ impl App<'static> {
     // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&'static self, port: u16, on_bound: F)
-        where
-            F: FnOnce(),
+    where
+        F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -135,15 +135,15 @@ impl App<'static> {
 
 impl RouteHandler for App<'_> {
     fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
     }
 
     fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -151,8 +151,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -160,8 +160,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
@@ -169,8 +169,8 @@ impl RouteHandler for App<'_> {
     }
 
     fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-        where
-            F: Fn(),
+    where
+        F: Fn(),
     {
         todo!();
 
