@@ -15,7 +15,7 @@ pub struct Req<'a> {
     headers: HashMap<&'a str, &'a str>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum ReqMethod {
     #[default]
     GET,
