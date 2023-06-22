@@ -109,7 +109,7 @@ impl App<'static> {
         for route in &self.routes {
             let mut is_compatible = true;
 
-            if route.paths.len() != req_paths.len() {
+            if (route.paths.len() != req_paths.len()) || (route.method != req.method) {
                 continue;
             }
 
