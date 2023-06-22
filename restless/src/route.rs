@@ -1,4 +1,5 @@
 use std::path::Path;
+use crate::requrest::ReqMethod;
 
 #[derive(Debug)]
 pub enum PathItemType {
@@ -21,12 +22,12 @@ impl PathItem<'_> {
 #[derive(Debug)]
 pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
-    pub method: Option<&'a str>,
+    pub method: ReqMethod,
     pub handler: fn(),
 }
 
 impl Route<'_> {
-    pub fn new<'a>(path: &'a str, handler: fn(), method: Option<&'a str>) -> Route<'a> {
+    pub fn new<'a>(path: &'a str, handler: fn(), method: ReqMethod) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,
