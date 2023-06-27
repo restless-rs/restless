@@ -64,7 +64,7 @@ impl App<'static> {
         // let req = Req::new(&*raw_req);
 
         let mut res = Res::new(write_half);
-        res.send("Hello, Tokio!").await;
+        res.send("Hi hi there\n").await;
     }
 
     async fn read_all<'a>(&self, read_half: &mut ReadHalf<'a>) -> Result<String, std::io::Error> {
