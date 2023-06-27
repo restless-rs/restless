@@ -106,32 +106,32 @@ impl<'a> Res<'a> {
         self
     }
 
-    pub fn get(&self, header_key: &str) -> Option<&str> {
+    pub fn get(&'a self, header_key: &str) -> Option<&str> {
         let header_value = *self.headers.get(header_key)?;
 
         Some(header_value)
     }
 
-    fn status_title(&self) -> Option<&'static str> {
+    fn status_title(&'a self) -> Option<&'static str> {
         let title = *STATUS_TITLES.get(&self.status)?;
 
         Some(title)
     }
 
-    pub async fn send(&mut self, body: &str) {
+    pub async fn send(&'a mut self, body: &str) {
         let formatted_headers = self.format_headers();
         let title = self.status_title().expect("Wrong status code");
 
         let raw_res = format!(
-            "HTTP/1.1 {} {}\r\n{}\r\n{}",
-            self.status, title, formatted_headers, body
+            "HTTP/1.1 {} {}\r\nContent-Length: {}\r\n{}\r\n{}",
+            self.status, title, body.len(), formatted_headers, body
         );
 
         self.stream.write_all(raw_res.as_bytes()).await.unwrap();
         self.stream.flush().await.unwrap();
     }
 
-    fn format_headers(&self) -> String {
+    fn format_headers(&'a self) -> String {
         let mut formatted_headers = String::new();
 
         for (key, value) in &self.headers {
