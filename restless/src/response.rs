@@ -1,9 +1,7 @@
-use crate::app::App;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::WriteHalf;
-use tokio::net::TcpStream;
 
 #[derive(Debug)]
 pub struct Res<'a> {
@@ -88,7 +86,7 @@ static STATUS_TITLES: Lazy<HashMap<usize, &'static str>> = Lazy::new(|| {
 
 impl<'a> Res<'a> {
     pub fn new(stream: WriteHalf<'a>) -> Res<'a> {
-        let mut res = Res {
+        let res = Res {
             status: 200,
             headers: HashMap::new(),
             stream,

@@ -1,15 +1,10 @@
-use std::fs::read;
-use std::mem::transmute;
 use std::net::SocketAddr;
 
-use std::time::Duration;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
 use tokio::net::tcp::ReadHalf;
-use tokio::task::spawn_blocking;
-use tokio::time::error::Error;
 
 use crate::requrest::Req;
 use crate::response::Res;
@@ -56,10 +51,10 @@ impl App<'static> {
         }
     }
 
-    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, addr: SocketAddr) {
-        let (mut read_half, mut write_half) = socket.split();
+    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, _addr: SocketAddr) {
+        let (mut read_half, write_half) = socket.split();
 
-        let raw_req = self.read_all(&mut read_half).await.unwrap();
+        let _raw_req = self.read_all(&mut read_half).await.unwrap();
         // let req = Req::new(&*raw_req);
 
         let mut res = Res::new(write_half);
@@ -100,6 +95,7 @@ impl App<'static> {
             .to_owned());
     }
 
+    #[allow(dead_code)]
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
         let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
@@ -252,7 +248,7 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
     #[test]
     fn test_build_with_dynamic() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes

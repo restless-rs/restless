@@ -1,8 +1,6 @@
 use crate::requrest::Req;
 use crate::response::Res;
 
-use std::path::Path;
-
 #[derive(Debug)]
 pub enum PathItemType {
     Static,
@@ -59,10 +57,10 @@ impl Route<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::route::{PathItem, PathItemType, Route};
+    use crate::route::Route;
 
     #[test]
     fn create_route() {
-        let route = Route::new("/", |_, _| {}, None);
+        let _route = Route::new("/", |_, _| {}, None);
     }
 }
