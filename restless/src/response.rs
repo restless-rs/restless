@@ -86,13 +86,11 @@ static STATUS_TITLES: Lazy<HashMap<usize, &'static str>> = Lazy::new(|| {
 
 impl<'a> Res<'a> {
     pub fn new(stream: WriteHalf<'a>) -> Res<'a> {
-        let res = Res {
+        Res {
             status: 200,
             headers: HashMap::new(),
             stream,
-        };
-
-        res
+        }
     }
 
     pub fn status(&'a mut self, status: usize) -> &mut Res {
@@ -123,12 +121,12 @@ impl<'a> Res<'a> {
         let formatted_headers = self.format_headers();
         let title = self.status_title().expect("Wrong status code");
 
-        let raw_res = String::from(format!(
+        let raw_res = format!(
             "HTTP/1.1 {} {}\r\n{}\r\n{}",
             self.status, title, formatted_headers, body
-        ));
+        );
 
-        let _ = self.stream.write_all(raw_res.as_bytes()).await.unwrap();
+        self.stream.write_all(raw_res.as_bytes()).await.unwrap();
         self.stream.flush().await.unwrap();
     }
 

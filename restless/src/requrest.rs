@@ -16,21 +16,21 @@ pub struct Req<'a> {
 #[derive(Default, Debug)]
 pub enum ReqMethod {
     #[default]
-    GET,
-    POST,
-    PATCH,
-    PUT,
-    DELETE,
+    Get,
+    Post,
+    Patch,
+    Put,
+    Delete,
 }
 
 impl Display for ReqMethod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReqMethod::GET => write!(f, "GET"),
-            ReqMethod::POST => write!(f, "POST"),
-            ReqMethod::PATCH => write!(f, "PATCH"),
-            ReqMethod::PUT => write!(f, "PUT"),
-            ReqMethod::DELETE => write!(f, "DELETE"),
+            ReqMethod::Get => write!(f, "GET"),
+            ReqMethod::Post => write!(f, "POST"),
+            ReqMethod::Patch => write!(f, "PATCH"),
+            ReqMethod::Put => write!(f, "PUT"),
+            ReqMethod::Delete => write!(f, "DELETE"),
         }
     }
 }
@@ -40,11 +40,11 @@ impl FromStr for ReqMethod {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "GET" => Ok(ReqMethod::GET),
-            "POST" => Ok(ReqMethod::POST),
-            "PATCH" => Ok(ReqMethod::PATCH),
-            "PUT" => Ok(ReqMethod::PUT),
-            "DELETE" => Ok(ReqMethod::DELETE),
+            "GET" => Ok(ReqMethod::Get),
+            "POST" => Ok(ReqMethod::Post),
+            "PATCH" => Ok(ReqMethod::Patch),
+            "PUT" => Ok(ReqMethod::Put),
+            "DELETE" => Ok(ReqMethod::Delete),
             _ => Err(()),
         }
     }
@@ -116,25 +116,25 @@ impl<'a> Req<'a> {
     }
 
     fn derive_queries(&mut self) {
-        if !self.path.contains("?") {
-            return ();
-        };
+        if !self.path.contains('?') {
+            return;
+        }
 
-        let splitted_path = self.path.split("?").collect::<Vec<_>>();
+        let splitted_path = self.path.split('?').collect::<Vec<_>>();
         let query_string = splitted_path.get(1).unwrap();
 
         self.queries = Req::parse_query_string(query_string);
 
-        let pure_path = splitted_path.get(0).unwrap();
+        let pure_path = splitted_path.first().unwrap();
         self.path = pure_path;
     }
 
     fn parse_query_string(query_string: &str) -> HashMap<&str, &str> {
         let mut res = HashMap::new();
 
-        let pairs: Vec<_> = query_string.split("&").collect();
+        let pairs: Vec<_> = query_string.split('&').collect();
         pairs.into_iter().for_each(|p| {
-            let mut splitted = p.split("=");
+            let mut splitted = p.split('=');
             let name = splitted.next().unwrap();
             let value = splitted.next().unwrap();
 

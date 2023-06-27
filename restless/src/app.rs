@@ -35,7 +35,7 @@ impl App<'static> {
 
         let listener = TcpListener::bind(addr.clone())
             .await
-            .expect(format!("Can't bound at {}", addr).as_str());
+            .unwrap_or_else(|_| panic!("Can't bound at {}", addr));
 
         on_bound();
 
@@ -54,10 +54,10 @@ impl App<'static> {
     async fn handle_stream<'a>(&'static self, mut socket: TcpStream, _addr: SocketAddr) {
         let (mut read_half, write_half) = socket.split();
 
-        let _raw_req = self.read_all(&mut read_half).await.unwrap();
-        // let req = Req::new(&*raw_req);
-
+        let raw_req = self.read_all(&mut read_half).await.unwrap();
+        let _req = Req::new(&raw_req);
         let mut res = Res::new(write_half);
+
         res.send("Hi hi there\n").await;
     }
 
@@ -65,9 +65,11 @@ impl App<'static> {
         // https://stackoverflow.com/a/71949195
         let mut buf: Vec<u8> = Vec::new();
 
+
         // Solve would block problems
         let mut firs_read_buf = [0u8; 2024];
         read_half.read(&mut firs_read_buf).await.unwrap();
+        println!("{:?}", firs_read_buf);
         buf.extend_from_slice(&firs_read_buf);
 
         loop {
@@ -84,7 +86,7 @@ impl App<'static> {
                     break;
                 }
                 Err(e) => {
-                    return Err(e.into());
+                    return Err(e);
                 }
             }
         }
@@ -98,7 +100,7 @@ impl App<'static> {
     #[allow(dead_code)]
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
-        let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
+        let req_paths = req.path.split_terminator('/').collect::<Vec<_>>();
 
         for route in &self.routes {
             let mut is_compatible = true;
@@ -107,10 +109,10 @@ impl App<'static> {
                 continue;
             }
 
-            for i in 0..route.paths.len() {
-                match route.paths[i].r#type {
+            for (i, path) in route.paths.iter().enumerate().take(route.paths.len()) {
+                match path.r#type {
                     PathItemType::Static => {
-                        if route.paths[i].value != req_paths[i] {
+                        if path.value != req_paths[i] {
                             is_compatible = false;
                             break;
                         }

@@ -37,13 +37,13 @@ impl Route<'_> {
     }
 
     fn parse_path(path: &str) -> Vec<PathItem> {
-        if !path.starts_with("/") {
+        if !path.starts_with('/') {
             panic!("Path {} should starts with /", path)
         };
 
-        path.split("/")
+        path.split('/')
             .map(|path_part| {
-                let path_type = if path_part.starts_with(":") {
+                let path_type = if path_part.starts_with(':') {
                     PathItemType::Dynamic
                 } else {
                     PathItemType::Static
