@@ -13,8 +13,7 @@ use tokio::time::error::Error;
 
 use crate::requrest::Req;
 use crate::response::Res;
-use crate::route::PathItemType;
-use crate::route::Route;
+use crate::route::{PathItemType, Route, RouteCallback};
 use crate::route_handler::RouteHandler;
 
 const BASE_ADDR: &str = "127.0.0.1";
@@ -133,27 +132,27 @@ impl App<'static> {
 }
 
 impl RouteHandler for App<'_> {
-    fn get(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+    fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes.push(Route::new(path, handler, Some("GET")));
         self
     }
 
-    fn post(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+    fn post(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes.push(Route::new(path, handler, Some("POST")));
         self
     }
 
-    fn put(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+    fn put(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes.push(Route::new(path, handler, Some("PUT")));
         self
     }
 
-    fn delete(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+    fn delete(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes.push(Route::new(path, handler, Some("DELETE")));
         self
     }
 
-    fn patch(&mut self, path: &'static str, handler: fn()) -> &mut Self {
+    fn patch(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes.push(Route::new(path, handler, Some("PATCH")));
         self
     }
@@ -169,15 +168,15 @@ mod tests {
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 
@@ -213,15 +212,15 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 
@@ -257,15 +256,15 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/:user_id/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 

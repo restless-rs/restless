@@ -1,3 +1,6 @@
+use crate::requrest::Req;
+use crate::response::Res;
+
 use std::path::Path;
 
 #[derive(Debug)]
@@ -18,19 +21,20 @@ impl PathItem<'_> {
     }
 }
 
-#[derive(Debug)]
+pub type RouteCallback = fn(&Req, &mut Res);
+
 pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
     pub method: Option<&'a str>,
-    pub handler: fn(),
+    pub callback: RouteCallback,
 }
 
 impl Route<'_> {
-    pub fn new<'a>(path: &'a str, handler: fn(), method: Option<&'a str>) -> Route<'a> {
+    pub fn new<'a>(path: &'a str, callback: RouteCallback, method: Option<&'a str>) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,
-            handler,
+            callback,
         }
     }
 
@@ -59,6 +63,6 @@ mod tests {
 
     #[test]
     fn create_route() {
-        let route = Route::new("/", || {}, None);
+        let route = Route::new("/", |_, _| {}, None);
     }
 }
