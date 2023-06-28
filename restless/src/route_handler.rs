@@ -1,17 +1,13 @@
+use crate::route::RouteCallback;
+
 pub trait RouteHandler {
-    fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn();
-    fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn();
-    fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn();
-    fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn();
-    fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn();
+    fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
+
+    fn post(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
+
+    fn put(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
+
+    fn delete(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
+
+    fn patch(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
 }

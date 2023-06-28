@@ -1,20 +1,14 @@
-use std::fs::read;
-use std::mem::transmute;
 use std::net::SocketAddr;
 
-use std::time::Duration;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 
 use once_cell::sync::Lazy;
 use tokio::net::tcp::ReadHalf;
-use tokio::task::spawn_blocking;
-use tokio::time::error::Error;
 
 use crate::requrest::Req;
 use crate::response::Res;
-use crate::route::PathItemType;
-use crate::route::Route;
+use crate::route::{PathItemType, Route, RouteCallback};
 use crate::route_handler::RouteHandler;
 
 const BASE_ADDR: &str = "127.0.0.1";
@@ -41,11 +35,10 @@ impl App<'static> {
 
         let listener = TcpListener::bind(addr.clone())
             .await
-            .expect(format!("Can't bound at {}", addr).as_str());
+            .unwrap_or_else(|_| panic!("Can't bound at {}", addr));
 
         on_bound();
 
-        /* of pain and suffer */
         loop {
             let result = listener.accept().await;
 
@@ -58,14 +51,14 @@ impl App<'static> {
         }
     }
 
-    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, addr: SocketAddr) {
-        let (mut read_half, mut write_half) = socket.split();
+    async fn handle_stream<'a>(&'static self, mut socket: TcpStream, _addr: SocketAddr) {
+        let (mut read_half, write_half) = socket.split();
 
         let raw_req = self.read_all(&mut read_half).await.unwrap();
-        // let req = Req::new(&*raw_req);
-
+        let _req = Req::new(&raw_req);
         let mut res = Res::new(write_half);
-        res.send("Hello, Tokio!").await;
+
+        res.send("Hi hi there\n").await;
     }
 
     async fn read_all<'a>(&self, read_half: &mut ReadHalf<'a>) -> Result<String, std::io::Error> {
@@ -74,8 +67,8 @@ impl App<'static> {
 
         // Solve would block problems
         let mut firs_read_buf = [0u8; 2024];
-        read_half.read(&mut firs_read_buf).await.unwrap();
-        buf.extend_from_slice(&firs_read_buf);
+        let bytes_read = read_half.read(&mut firs_read_buf).await.unwrap();
+        buf.extend_from_slice(&firs_read_buf[..bytes_read]);
 
         loop {
             // Creating the buffer **after** the `await` prevents it from
@@ -91,7 +84,7 @@ impl App<'static> {
                     break;
                 }
                 Err(e) => {
-                    return Err(e.into());
+                    return Err(e);
                 }
             }
         }
@@ -102,9 +95,10 @@ impl App<'static> {
             .to_owned());
     }
 
+    #[allow(dead_code)]
     fn build_request_path<'a>(&self, req: &'a Req) -> Vec<&Route<'a>> {
         let mut request_map = Vec::new();
-        let req_paths = req.path.split_terminator("/").collect::<Vec<_>>();
+        let req_paths = req.path.split_terminator('/').collect::<Vec<_>>();
 
         for route in &self.routes {
             let mut is_compatible = true;
@@ -113,10 +107,10 @@ impl App<'static> {
                 continue;
             }
 
-            for i in 0..route.paths.len() {
-                match route.paths[i].r#type {
+            for (i, path) in route.paths.iter().enumerate().take(route.paths.len()) {
+                match path.r#type {
                     PathItemType::Static => {
-                        if route.paths[i].value != req_paths[i] {
+                        if path.value != req_paths[i] {
                             is_compatible = false;
                             break;
                         }
@@ -134,46 +128,28 @@ impl App<'static> {
 }
 
 impl RouteHandler for App<'_> {
-    fn get<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-    }
-
-    fn post<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("GET")));
         self
     }
 
-    fn put<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn post(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("POST")));
         self
     }
 
-    fn delete<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
-
+    fn put(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("PUT")));
         self
     }
 
-    fn patch<F>(&mut self, path: &str, handler: F) -> &mut Self
-    where
-        F: Fn(),
-    {
-        todo!();
+    fn delete(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("DELETE")));
+        self
+    }
 
+    fn patch(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
+        self.routes.push(Route::new(path, handler, Some("PATCH")));
         self
     }
 }
@@ -188,15 +164,15 @@ mod tests {
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 
@@ -228,19 +204,19 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
     #[test]
     fn test_build_req_path() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 
@@ -272,19 +248,19 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
     #[test]
     fn test_build_with_dynamic() {
-        let mut temp_app = App::new();
+        let temp_app = App::new();
 
         temp_app
             .routes
-            .push(Route::new("/home", || println!("home"), Some("GET")));
+            .push(Route::new("/home", |_, _| println!("home"), Some("GET")));
         temp_app.routes.push(Route::new(
             "/:user_id/login",
-            || println!("first login"),
+            |_, _| println!("first login"),
             Some("GET"),
         ));
         temp_app.routes.push(Route::new(
             "/login",
-            || println!("second logout"),
+            |_, _| println!("second logout"),
             Some("GET"),
         ));
 

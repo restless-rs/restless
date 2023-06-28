@@ -1,4 +1,5 @@
-use std::path::Path;
+use crate::requrest::Req;
+use crate::response::Res;
 
 #[derive(Debug)]
 pub enum PathItemType {
@@ -18,30 +19,31 @@ impl PathItem<'_> {
     }
 }
 
-#[derive(Debug)]
+pub type RouteCallback = fn(&Req, &mut Res);
+
 pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
     pub method: Option<&'a str>,
-    pub handler: fn(),
+    pub callback: RouteCallback,
 }
 
 impl Route<'_> {
-    pub fn new<'a>(path: &'a str, handler: fn(), method: Option<&'a str>) -> Route<'a> {
+    pub fn new<'a>(path: &'a str, callback: RouteCallback, method: Option<&'a str>) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,
-            handler,
+            callback,
         }
     }
 
     fn parse_path(path: &str) -> Vec<PathItem> {
-        if !path.starts_with("/") {
+        if !path.starts_with('/') {
             panic!("Path {} should starts with /", path)
         };
 
-        path.split("/")
+        path.split('/')
             .map(|path_part| {
-                let path_type = if path_part.starts_with(":") {
+                let path_type = if path_part.starts_with(':') {
                     PathItemType::Dynamic
                 } else {
                     PathItemType::Static
@@ -55,10 +57,10 @@ impl Route<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::route::{PathItem, PathItemType, Route};
+    use crate::route::Route;
 
     #[test]
     fn create_route() {
-        let route = Route::new("/", || {}, None);
+        let _route = Route::new("/", |_, _| {}, None);
     }
 }
