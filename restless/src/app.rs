@@ -65,7 +65,6 @@ impl App<'static> {
         // https://stackoverflow.com/a/71949195
         let mut buf: Vec<u8> = Vec::new();
 
-
         // Solve would block problems
         let mut firs_read_buf = [0u8; 2024];
         read_half.read(&mut firs_read_buf).await.unwrap();
