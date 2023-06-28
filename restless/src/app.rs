@@ -67,9 +67,8 @@ impl App<'static> {
 
         // Solve would block problems
         let mut firs_read_buf = [0u8; 2024];
-        read_half.read(&mut firs_read_buf).await.unwrap();
-        println!("{:?}", firs_read_buf);
-        buf.extend_from_slice(&firs_read_buf);
+        let bytes_read = read_half.read(&mut firs_read_buf).await.unwrap();
+        buf.extend_from_slice(&firs_read_buf[..bytes_read]);
 
         loop {
             // Creating the buffer **after** the `await` prevents it from
