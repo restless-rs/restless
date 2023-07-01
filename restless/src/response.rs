@@ -124,7 +124,11 @@ impl<'a> Res<'a> {
 
         let raw_res = format!(
             "HTTP/1.1 {} {}\r\nContent-Length: {}\r\n{}\r\n{}",
-            self.status, title, body.len(), formatted_headers, body
+            self.status,
+            title,
+            body.len(),
+            formatted_headers,
+            body
         );
 
         self.stream.write_all(raw_res.as_bytes()).await.unwrap();
