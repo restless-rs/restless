@@ -126,7 +126,7 @@ impl<'a> Res<'a> {
             "HTTP/1.1 {} {}\r\nContent-Length: {}\r\n{}\r\n{}",
             self.status,
             title,
-            body.len(),
+            body.bytes(),
             formatted_headers,
             body
         );
