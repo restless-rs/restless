@@ -50,8 +50,8 @@ impl FromStr for ReqMethod {
     }
 }
 
-impl<'a> Req<'a> {
-    pub fn new(raw_req: &'a str) -> Req<'a> {
+impl Req<'_> {
+    pub fn new(raw_req: &str) -> Req {
         let mut lines = raw_req.lines();
         let mut req = Req::default();
 
