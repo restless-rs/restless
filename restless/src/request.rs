@@ -3,14 +3,13 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Default, Debug)]
-pub struct Req<'a> {
+pub struct Req {
     pub body: Option<String>,
-    pub path: &'a str,
+    pub path: String,
     pub method: ReqMethod,
-    pub hostname: &'a str,
-    pub queries: HashMap<&'a str, &'a str>,
-    protocol: &'a str,
-    headers: HashMap<&'a str, &'a str>,
+    pub queries: HashMap<String, String>,
+    protocol: String,
+    headers: HashMap<String, String>,
 }
 
 #[derive(Default, Debug)]
@@ -50,7 +49,7 @@ impl FromStr for ReqMethod {
     }
 }
 
-impl Req<'_> {
+impl Req {
     pub fn new(raw_req: &str) -> Req {
         let mut lines = raw_req.lines();
         let mut req = Req::default();
@@ -60,8 +59,8 @@ impl Req<'_> {
         let (req_method, path, protocol) = Req::parse_first_line(main_info).expect("Wrong format");
 
         req.method = req_method;
-        req.path = path;
-        req.protocol = protocol;
+        req.path = path.parse().unwrap();
+        req.protocol = protocol.parse().unwrap();
 
         // Pulling headers
         lines.clone().take_while(|l| !l.is_empty()).for_each(|l| {
@@ -69,10 +68,9 @@ impl Req<'_> {
             let header_name = split.next().unwrap();
             let header_value = split.next().unwrap();
 
-            req.headers.insert(header_name, header_value);
+            req.headers.insert(header_name.parse().unwrap(), header_value.parse().unwrap());
         });
 
-        req.derive_hostname();
         req.derive_queries();
 
         // Pulling body
@@ -94,7 +92,7 @@ impl Req<'_> {
     pub fn get(&self, header_key: &str) -> Option<&str> {
         let header_value = self.headers.get(header_key)?;
 
-        Some(*header_value)
+        Some(header_value)
     }
 
     fn parse_first_line(line: &str) -> Result<(ReqMethod, &str, &str), ()> {
@@ -109,12 +107,6 @@ impl Req<'_> {
         Ok((req_method, path, protocol))
     }
 
-    fn derive_hostname(&mut self) {
-        if let Some(hostname) = self.headers.get("Host") {
-            self.hostname = hostname;
-        }
-    }
-
     fn derive_queries(&mut self) {
         if !self.path.contains('?') {
             return;
@@ -126,17 +118,17 @@ impl Req<'_> {
         self.queries = Req::parse_query_string(query_string);
 
         let pure_path = splitted_path.first().unwrap();
-        self.path = pure_path;
+        self.path = pure_path.parse().unwrap();
     }
 
-    fn parse_query_string(query_string: &str) -> HashMap<&str, &str> {
+    fn parse_query_string(query_string: &str) -> HashMap<String, String> {
         let mut res = HashMap::new();
 
         let pairs: Vec<_> = query_string.split('&').collect();
         pairs.into_iter().for_each(|p| {
             let mut splitted = p.split('=');
-            let name = splitted.next().unwrap();
-            let value = splitted.next().unwrap();
+            let name = splitted.next().unwrap().to_owned();
+            let value = splitted.next().unwrap().to_owned();
 
             res.insert(name, value);
         });

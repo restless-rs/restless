@@ -8,11 +8,10 @@ fn main() {
     let port = 3000;
     let app = App::new();
 
-    app.get("/index", index);
+    app.get("/index", |req, mut res| {
+        res.set("content-type", "application/json");
+        res.send("some")
+    });
 
     app.listen(port, || println!("Bind at {port} port"));
-}
-
-async fn index(req: &Req<'_>, res: &mut Res<'_>) {
-    res.send("some text").await
 }

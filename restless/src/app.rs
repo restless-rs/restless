@@ -57,16 +57,13 @@ impl App<'static> {
 
         let raw_req = self.read_all(&mut read_half).await.unwrap();
         let mut req = Req::new(&raw_req);
-        let mut res = Res::new(write_half);
+        let mut res = Res::new();
 
-        let routes = self.build_request_path(&req);
+        let route = self.get_route(&req).unwrap();
 
-        for route in routes {
-            (route.callback)().await;
-            // req = ctx.0;
-            // res = ctx.1;
-        }
-        // res.send("some text").await;
+        let mut out = (route.callback)(req, res);
+
+        Res::send_outcome(out, write_half).await;
     }
 
     async fn read_all<'a>(&self, read_half: &mut ReadHalf<'a>) -> Result<String, std::io::Error> {
@@ -104,8 +101,8 @@ impl App<'static> {
     }
 
     #[allow(dead_code)]
-    fn build_request_path<'a, 'b>(&'static self, req: &'a Req) -> Vec<&Route<'b>> {
-        let mut request_map = Vec::new();
+    fn get_route<'a, 'b>(&'static self, req: &'a Req) -> Option<&Route<'b>> {
+        let mut res_route= None;
         let req_paths = req.path.split_terminator('/').collect::<Vec<_>>();
 
         for route in &self.routes {
@@ -128,19 +125,15 @@ impl App<'static> {
             }
 
             if is_compatible {
-                request_map.push(route);
+                res_route = Some(route);
+                break;
             }
         }
-        request_map
+        res_route
     }
 }
 
 impl RouteHandler for App<'_> {
-    fn r#use(&mut self, path: &str, handler: RouteCallback) {
-        self.routes.push(Route::new(path, handler, None, true));
-        // self
-    }
-
     fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
         self.routes
             .push(Route::new(path, handler, Some("GET"), false));
@@ -220,7 +213,7 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
         let req = Req::new(mock_req);
 
-        let routes = temp_app.build_request_path(&req);
+        let routes = temp_app.get_route(&req);
 
         assert_eq!(routes.len(), 0);
     }
@@ -269,7 +262,7 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
 
         let req = Req::new(mock_req);
 
-        let routes = temp_app.build_request_path(&req);
+        let routes = temp_app.get_route(&req);
 
         assert_eq!(routes.len(), 2);
     }
@@ -317,7 +310,7 @@ Accept-Language: en,en-US;q=0.9,ru-RU;q=0.8,ru;q=0.7
 Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjgwMDFjNDNiNGEyZDVkODRlIiwic2VjcmV0IjoiMWU4Y2Q4NmIwYmQ5YmE3MzI5ZWY5MjJjOTMwZTBjM2VmZWZiMjM4NzQyYzBlYzE3MmIxODQ4NTQ0ZGY1MGM1ZGE0YjBlYzQzOTIwY2Y3Yzc3Mjg3OWY5MWQ1OTZlNzAwZTdhOWY3NjNkZWI4YjRiYzIwYzJmMDkwZTU3M2EzMzgzZGFlM2M5NjNhYTM1NGU0NmU0ZjgxZjcwYmE2MjI3MWEyMTM5NGYyZmQ0ZDNmNGY3MzJlOWQyMWUyOTI2Yzk3ZWVjZjAwMWJlMDM4NGZhMjA5YTljNGQ4ZDU1YmFkMWMxZTI0MWNiZGQxYTBmMzBlMjkxNDM5NmYzNTQ5YWU4OCJ9; cookie-alert=true; _ym_uid=1674046531634537132; _ym_d=1674046531; csrftoken=icRfgtexnng3ZjsuACqA0zCjdvIEW3t6; Webstorm-349731ad=ca1a0e66-d6d8-446d-a5b3-911737bf1d3e; _ga_EFC8B2CDNB=GS1.1.1679717912.2.0.1679718014.0.0.0; username-localhost-8888="2|1:0|10:1682664751|23:username-localhost-8888|44:ODJmNGUwNTEzOGE1NGYwMDgwOGZiMGFlYmUzZGI5N2Y=|07cf7de31aa2f8fd435b46d9fb76ffffb6f3412857496fafe4c68f426f46ea91"; username-localhost-8889="2|1:0|10:1683263705|23:username-localhost-8889|44:Y2I5MmUzYTA4MWY1NGVlMjg2OWE2ODE5YjZmYzE0NmQ=|b74a99392dc758c4b95264fe1602ceaf0161e6ac5291eeafd830d10cb096b7bb"; Webstorm-3497356c=5cdf5472-3f5b-4526-b4c7-4c705ce4d8e6"#;
         let req = Req::new(mock_req);
 
-        let routes = temp_app.build_request_path(&req);
+        let routes = temp_app.get_route(&req);
 
         assert_eq!(routes.len(), 1);
     }

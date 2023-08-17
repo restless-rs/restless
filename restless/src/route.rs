@@ -22,7 +22,7 @@ impl PathItem<'_> {
     }
 }
 
-pub type RouteCallback<'a> = fn() -> BoxFuture<'a, ()>;
+pub type RouteCallback = fn(Req, Res) -> Res;
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -30,14 +30,14 @@ pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
     pub method: Option<&'a str>,
     #[derivative(Debug = "ignore")]
-    pub callback: RouteCallback<'a>,
+    pub callback: RouteCallback,
     is_middleware: bool,
 }
 
 impl Route<'_> {
     pub fn new<'a>(
         path: &'a str,
-        callback: RouteCallback<'a>,
+        callback: RouteCallback,
         method: Option<&'a str>,
         is_middleware: bool,
     ) -> Route<'a> {
