@@ -68,7 +68,8 @@ impl Req {
             let header_name = split.next().unwrap();
             let header_value = split.next().unwrap();
 
-            req.headers.insert(header_name.parse().unwrap(), header_value.parse().unwrap());
+            req.headers
+                .insert(header_name.parse().unwrap(), header_value.parse().unwrap());
         });
 
         req.derive_queries();

@@ -1,8 +1,8 @@
-use std::borrow::Borrow;
 use crate::request::Req;
 use crate::response::Res;
 use derivative::Derivative;
 use futures::future::BoxFuture;
+use std::borrow::Borrow;
 use std::task::{Context, Poll};
 
 #[derive(Debug)]
@@ -35,11 +35,7 @@ pub struct Route<'a> {
 }
 
 impl Route<'_> {
-    pub fn new<'a>(
-        path: &'a str,
-        callback: RouteCallback,
-        method: Option<&'a str>,
-    ) -> Route<'a> {
+    pub fn new<'a>(path: &'a str, callback: RouteCallback, method: Option<&'a str>) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,

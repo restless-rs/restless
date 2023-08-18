@@ -19,9 +19,11 @@ pub struct App<'a> {
 }
 
 static mut APP: Lazy<App<'static>> = Lazy::new(|| App {
-    routes: vec![Route::new("/404", |req, mut res| {
-        res.status(404).send("Not found")
-    }, Some("GET"))]
+    routes: vec![Route::new(
+        "/404",
+        |req, mut res| res.status(404).send("Not found"),
+        Some("GET"),
+    )],
 });
 
 impl App<'static> {
@@ -32,8 +34,8 @@ impl App<'static> {
     // TODO: Client error handle hook on connection
     #[tokio::main]
     pub async fn listen<F>(&'static self, port: u16, on_bound: F)
-        where
-            F: FnOnce(),
+    where
+        F: FnOnce(),
     {
         // TODO: Create `build_addr` function
         let addr = format!("{}:{}", BASE_ADDR.to_owned(), port);
@@ -72,7 +74,11 @@ impl App<'static> {
                 Res::send_outcome(out, write_half).await;
             }
             None => {
-                let not_found = self.routes.iter().find(|r| r.paths[1].value == "404").unwrap();
+                let not_found = self
+                    .routes
+                    .iter()
+                    .find(|r| r.paths[1].value == "404")
+                    .unwrap();
                 let mut out = (not_found.callback)(req, res);
 
                 Res::send_outcome(out, write_half).await;
@@ -150,32 +156,27 @@ impl App<'static> {
 
 impl RouteHandler for App<'_> {
     fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
-        self.routes
-            .push(Route::new(path, handler, Some("GET")));
+        self.routes.push(Route::new(path, handler, Some("GET")));
         self
     }
 
     fn post(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
-        self.routes
-            .push(Route::new(path, handler, Some("POST")));
+        self.routes.push(Route::new(path, handler, Some("POST")));
         self
     }
 
     fn put(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
-        self.routes
-            .push(Route::new(path, handler, Some("PUT")));
+        self.routes.push(Route::new(path, handler, Some("PUT")));
         self
     }
 
     fn delete(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
-        self.routes
-            .push(Route::new(path, handler, Some("DELETE")));
+        self.routes.push(Route::new(path, handler, Some("DELETE")));
         self
     }
 
     fn patch(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self {
-        self.routes
-            .push(Route::new(path, handler, Some("PATCH")));
+        self.routes.push(Route::new(path, handler, Some("PATCH")));
         self
     }
 }
@@ -188,21 +189,15 @@ mod tests {
     fn test_build_empty() {
         let temp_app = App::new();
 
-        temp_app.routes.push(Route::new(
-            "/home",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            |_, res| res,
-            Some("GET"),
-        ));
+        temp_app
+            .routes
+            .push(Route::new("/home", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/login", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/login", |_, res| res, Some("GET")));
 
         let mock_req = r#"GET / HTTP/1.1
 Host: localhost:3000
@@ -234,21 +229,15 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
     fn test_build_req_path() {
         let temp_app = App::new();
 
-        temp_app.routes.push(Route::new(
-            "/home",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            |_, res| res,
-            Some("GET"),
-        ));
+        temp_app
+            .routes
+            .push(Route::new("/home", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/login", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/login", |_, res| res, Some("GET")));
 
         let mock_req = r#"GET /login HTTP/1.1
 Host: localhost:3000
@@ -280,21 +269,15 @@ Cookie: _ga=GA1.1.132133627.1663565819; a_session_console_legacy=eyJpZCI6IjYzMjg
     fn test_build_with_dynamic() {
         let temp_app = App::new();
 
-        temp_app.routes.push(Route::new(
-            "/home",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/:user_id/login",
-            |_, res| res,
-            Some("GET"),
-        ));
-        temp_app.routes.push(Route::new(
-            "/login",
-            |_, res| res,
-            Some("GET"),
-        ));
+        temp_app
+            .routes
+            .push(Route::new("/home", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/:user_id/login", |_, res| res, Some("GET")));
+        temp_app
+            .routes
+            .push(Route::new("/login", |_, res| res, Some("GET")));
 
         let mock_req = r#"GET /234sdf/login HTTP/1.1
 Host: localhost:3000
