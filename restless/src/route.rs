@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use crate::request::Req;
 use crate::response::Res;
 use derivative::Derivative;
@@ -31,7 +32,6 @@ pub struct Route<'a> {
     pub method: Option<&'a str>,
     #[derivative(Debug = "ignore")]
     pub callback: RouteCallback,
-    is_middleware: bool,
 }
 
 impl Route<'_> {
@@ -39,13 +39,11 @@ impl Route<'_> {
         path: &'a str,
         callback: RouteCallback,
         method: Option<&'a str>,
-        is_middleware: bool,
     ) -> Route<'a> {
         Route {
             paths: Route::parse_path(path),
             method,
             callback,
-            is_middleware,
         }
     }
 

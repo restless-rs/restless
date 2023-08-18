@@ -95,7 +95,7 @@ impl<'a> Res {
         }
     }
 
-    pub fn status(&'a mut self, status: usize) -> &mut Res {
+    pub fn status(mut self, status: usize) -> Res {
         self.status = status;
 
         self
