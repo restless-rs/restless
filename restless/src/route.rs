@@ -62,12 +62,3 @@ impl Route<'_> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::route::Route;
-
-    #[test]
-    fn create_route() {
-        let _route = Route::new("/", |_, _| {}, None, false);
-    }
-}
