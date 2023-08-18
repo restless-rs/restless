@@ -1,13 +1,14 @@
+use futures::Stream;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::WriteHalf;
 
 #[derive(Debug)]
-pub struct Res<'a> {
-    stream: WriteHalf<'a>,
+pub struct Res {
+    pub outcome: String,
     status: usize,
-    headers: HashMap<&'a str, &'a str>,
+    headers: HashMap<String, String>,
 }
 
 // NOTE: Reference:
@@ -85,29 +86,30 @@ static STATUS_TITLES: Lazy<HashMap<usize, &'static str>> = Lazy::new(|| {
     ])
 });
 
-impl<'a> Res<'a> {
-    pub fn new(stream: WriteHalf<'a>) -> Res<'a> {
+impl<'a> Res {
+    pub fn new() -> Res {
         Res {
+            outcome: String::new(),
             status: 200,
             headers: HashMap::new(),
-            stream,
         }
     }
 
-    pub fn status(&'a mut self, status: usize) -> &mut Res {
+    pub fn status(mut self, status: usize) -> Res {
         self.status = status;
 
         self
     }
 
     pub fn set(&'a mut self, header_key: &'a str, header_value: &'a str) -> &'a mut Res {
-        self.headers.insert(header_key, header_value);
+        self.headers
+            .insert(header_key.parse().unwrap(), header_value.parse().unwrap());
 
         self
     }
 
-    pub fn get(&'a self, header_key: &str) -> Option<&str> {
-        let header_value = *self.headers.get(header_key)?;
+    pub fn get(&self, header_key: &str) -> Option<&str> {
+        let header_value = self.headers.get(header_key)?;
 
         Some(header_value)
     }
@@ -118,21 +120,22 @@ impl<'a> Res<'a> {
         Some(title)
     }
 
-    pub async fn send(&'a mut self, body: &str) {
+    pub fn send(mut self, outcome: &str) -> Res {
+        self.outcome.push_str(outcome);
+        self
+    }
+
+    pub async fn send_outcome(mut self, mut stream: WriteHalf<'_>) {
         let formatted_headers = self.format_headers();
         let title = self.status_title().expect("Wrong status code");
 
         let raw_res = format!(
-            "HTTP/1.1 {} {}\r\nContent-Length: {}\r\n{}\r\n{}",
-            self.status,
-            title,
-            body.bytes().len(),
-            formatted_headers,
-            body
+            "HTTP/1.1 {} {}\r\n{}\r\n{}",
+            self.status, title, formatted_headers, self.outcome
         );
 
-        self.stream.write_all(raw_res.as_bytes()).await.unwrap();
-        self.stream.flush().await.unwrap();
+        stream.write_all(raw_res.as_bytes()).await.unwrap();
+        stream.flush().await.unwrap();
     }
 
     fn format_headers(&'a self) -> String {

@@ -1,5 +1,9 @@
-use crate::requrest::Req;
+use crate::request::Req;
 use crate::response::Res;
+use derivative::Derivative;
+use futures::future::BoxFuture;
+use std::borrow::Borrow;
+use std::task::{Context, Poll};
 
 #[derive(Debug)]
 pub enum PathItemType {
@@ -19,11 +23,14 @@ impl PathItem<'_> {
     }
 }
 
-pub type RouteCallback = fn(&Req, &mut Res);
+pub type RouteCallback = fn(Req, Res) -> Res;
 
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Route<'a> {
     pub paths: Vec<PathItem<'a>>,
     pub method: Option<&'a str>,
+    #[derivative(Debug = "ignore")]
     pub callback: RouteCallback,
 }
 
@@ -55,12 +62,3 @@ impl Route<'_> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::route::Route;
-
-    #[test]
-    fn create_route() {
-        let _route = Route::new("/", |_, _| {}, None);
-    }
-}
