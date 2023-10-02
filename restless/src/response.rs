@@ -148,3 +148,9 @@ impl<'a> Res {
         formatted_headers
     }
 }
+
+impl Default for Res {
+    fn default() -> Self {
+        Self::new()
+    }
+}
