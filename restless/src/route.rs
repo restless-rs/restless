@@ -1,9 +1,6 @@
 use crate::request::Req;
 use crate::response::Res;
 use derivative::Derivative;
-use futures::future::BoxFuture;
-use std::borrow::Borrow;
-use std::task::{Context, Poll};
 
 #[derive(Debug)]
 pub enum PathItemType {
@@ -48,17 +45,22 @@ impl Route<'_> {
             panic!("Path {} should starts with /", path)
         };
 
-        path.split('/')
-            .map(|path_part| {
-                let path_type = if path_part.starts_with(':') {
-                    PathItemType::Dynamic
-                } else {
-                    PathItemType::Static
-                };
+        match path {
+            "/" => {
+                vec![PathItem::new("/", PathItemType::Static)]
+            }
+            _ => path
+                .split('/')
+                .map(|path_part| {
+                    let path_type = if path_part.starts_with(':') {
+                        PathItemType::Dynamic
+                    } else {
+                        PathItemType::Static
+                    };
 
-                PathItem::new(path_part, path_type)
-            })
-            .collect()
+                    PathItem::new(path_part, path_type)
+                })
+                .collect(),
+        }
     }
 }
-
