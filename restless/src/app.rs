@@ -112,7 +112,7 @@ impl App<'static> {
     }
 
     #[allow(dead_code)]
-    fn get_route<'a, 'b>(&'static self, req: &'a Req) -> Option<&Route<'b>> {
+    fn get_route<'a>(&'static self, req: &Req) -> Option<&Route<'a>> {
         let mut res_route = None;
 
         let req_paths = if req.path == "/" {
