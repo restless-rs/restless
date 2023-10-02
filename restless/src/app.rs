@@ -62,17 +62,21 @@ impl App<'static> {
         let req = Req::new(&raw_req);
         let res = Res::new();
 
-        let route = self.get_route(&req);
+        match req {
+            Some(req) => {
+                let route = self.get_route(&req);
 
-        match route {
-            Some(r) => {
-                let out = (r.callback)(req, res);
-                Res::send_outcome(out, write_half).await;
+                match route {
+                    Some(r) => {
+                        Res::send_outcome((r.callback)(req, res), write_half).await;
+                    }
+                    None => {
+                        Res::send_outcome(res.status(404), write_half).await;
+                    }
+                }
             }
             None => {
-                let mut out = Res::new();
-                out = out.status(404);
-                Res::send_outcome(out, write_half).await;
+                Res::send_outcome(res.status(400), write_half).await;
             }
         }
     }
