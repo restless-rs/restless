@@ -1,5 +1,4 @@
-use futures::executor::block_on;
-use std::net::SocketAddr;
+use std::{io::ErrorKind::WouldBlock, net::SocketAddr};
 
 use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
@@ -18,13 +17,7 @@ pub struct App<'a> {
     pub routes: Vec<Route<'a>>,
 }
 
-static mut APP: Lazy<App<'static>> = Lazy::new(|| App {
-    routes: vec![Route::new(
-        "/404",
-        |req, mut res| res.status(404).send("Not found"),
-        Some("GET"),
-    )],
-});
+static mut APP: Lazy<App<'static>> = Lazy::new(|| App { routes: vec![] });
 
 impl App<'static> {
     pub fn new() -> &'static mut Lazy<App<'static>> {
@@ -46,6 +39,10 @@ impl App<'static> {
 
         on_bound();
 
+        for route in &self.routes {
+            println!(">> {:?}", route.paths);
+        }
+
         loop {
             let result = listener.accept().await;
 
@@ -62,25 +59,19 @@ impl App<'static> {
         let (mut read_half, write_half) = socket.split();
 
         let raw_req = self.read_all(&mut read_half).await.unwrap();
-        let mut req = Req::new(&raw_req);
-        let mut res = Res::new();
+        let req = Req::new(&raw_req);
+        let res = Res::new();
 
         let route = self.get_route(&req);
 
         match route {
             Some(r) => {
-                let mut out = (r.callback)(req, res);
-
+                let out = (r.callback)(req, res);
                 Res::send_outcome(out, write_half).await;
             }
             None => {
-                let not_found = self
-                    .routes
-                    .iter()
-                    .find(|r| r.paths[1].value == "404")
-                    .unwrap();
-                let mut out = (not_found.callback)(req, res);
-
+                let mut out = Res::new();
+                out = out.status(404);
                 Res::send_outcome(out, write_half).await;
             }
         }
@@ -105,7 +96,7 @@ impl App<'static> {
             match read_half.try_read(&mut tmp_buf) {
                 Ok(0) => break,
                 Ok(bytes_read) => buf.extend_from_slice(&tmp_buf[..bytes_read]),
-                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                Err(ref e) if e.kind() == WouldBlock => {
                     break;
                 }
                 Err(e) => {
@@ -121,9 +112,17 @@ impl App<'static> {
     }
 
     #[allow(dead_code)]
-    fn get_route<'a, 'b>(&'static self, req: &'a Req) -> Option<&Route<'b>> {
+    fn get_route<'a>(&'static self, req: &Req) -> Option<&Route<'a>> {
         let mut res_route = None;
-        let req_paths = req.path.split_terminator('/').collect::<Vec<_>>();
+
+        let req_paths = if req.path == "/" {
+            vec!["/"]
+        } else {
+            req.path.split_terminator('/').skip(1).collect::<Vec<_>>()
+            // NOTE(gr3yknigh1):          ^^^^^^^^ skipes first empty element
+        };
+
+        println!(">>>>> {:?}", req_paths);
 
         for route in &self.routes {
             let mut is_compatible = true;
@@ -180,4 +179,3 @@ impl RouteHandler for App<'_> {
         self
     }
 }
-

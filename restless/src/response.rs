@@ -1,4 +1,3 @@
-use futures::Stream;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use tokio::io::AsyncWriteExt;
@@ -125,7 +124,7 @@ impl<'a> Res {
         self
     }
 
-    pub async fn send_outcome(mut self, mut stream: WriteHalf<'_>) {
+    pub async fn send_outcome(self, mut stream: WriteHalf<'_>) {
         let formatted_headers = self.format_headers();
         let title = self.status_title().expect("Wrong status code");
 
@@ -146,5 +145,11 @@ impl<'a> Res {
         }
 
         formatted_headers
+    }
+}
+
+impl Default for Res {
+    fn default() -> Self {
+        Self::new()
     }
 }

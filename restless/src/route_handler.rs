@@ -1,5 +1,4 @@
 use crate::route::RouteCallback;
-use std::ptr::addr_of_mut;
 
 pub trait RouteHandler {
     fn get(&mut self, path: &'static str, handler: RouteCallback) -> &mut Self;
