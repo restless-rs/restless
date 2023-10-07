@@ -1,5 +1,4 @@
-use restless::app::App;
-use restless::route_handler::RouteHandler;
+use restless::{app::App, route_handler::RouteHandler};
 
 fn main() {
     let port = 3000;

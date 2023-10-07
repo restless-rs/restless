@@ -50,11 +50,16 @@ impl FromStr for ReqMethod {
 }
 
 impl Req {
-    pub fn new(raw_req: &str) -> Req {
+    pub fn new(raw_req: &str) -> Option<Req> {
         let mut lines = raw_req.lines();
         let mut req = Req::default();
 
-        let main_info = lines.next().unwrap();
+        let main_info = match lines.next() {
+            Some(v) => v,
+            None => {
+                return None;
+            }
+        };
 
         let (req_method, path, protocol) = Req::parse_first_line(main_info).expect("Wrong format");
 
@@ -87,7 +92,7 @@ impl Req {
             req.body = Some(body);
         };
 
-        req
+        Some(req)
     }
 
     pub fn get(&self, header_key: &str) -> Option<&str> {
