@@ -5,9 +5,9 @@ fn main() {
     let app = App::new();
 
     app.get("/", |_, mut res| {
-        res.set("content-type", "application/json");
-        res.send("Some")
+        res.set("Content-Type", "text/plain");
+        res.status(200).send("Hello world!")
     });
 
-    app.listen(port, || println!("Bind at {port} port"));
+    app.listen(port, || println!("[info]: Started HTTP server at {port}"));
 }
