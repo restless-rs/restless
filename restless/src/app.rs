@@ -39,10 +39,6 @@ impl App<'static> {
 
         on_bound();
 
-        for route in &self.routes {
-            println!(">> {:?}", route.paths);
-        }
-
         loop {
             let result = listener.accept().await;
 
@@ -125,8 +121,6 @@ impl App<'static> {
             req.path.split_terminator('/').skip(1).collect::<Vec<_>>()
             // NOTE(gr3yknigh1):          ^^^^^^^^ skipes first empty element
         };
-
-        println!(">>>>> {:?}", req_paths);
 
         for route in &self.routes {
             let mut is_compatible = true;
