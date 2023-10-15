@@ -2,6 +2,7 @@
 name = "restless-web"
 version = "0.1.0"
 edition = "2021"
+readme = "../README.md"
 description = "Back-end framework inspired by express.js"
 license = "MIT"
 homepage = "https://github.com/restless-rs/restless"
