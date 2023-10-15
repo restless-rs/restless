@@ -1,4 +1,4 @@
-# Resless
+# Resless Web
 
 Express-inspired rust web framework.
 
@@ -7,7 +7,7 @@ Express-inspired rust web framework.
 Minimal http server setup
 
 ```rust
-use restless::{app::App, route_handler::RouteHandler};
+use restless_web::{app::App, route_handler::RouteHandler};
 
 fn main() {
     let port = 8080;
@@ -25,7 +25,7 @@ fn main() {
 Accessing request fields
 
 ```rust
-use restless::{app::App, route_handler::RouteHandler};
+use restless_web::{app::App, route_handler::RouteHandler};
 
 fn main() {
     let port = 8069;
